@@ -10,7 +10,7 @@
 - AI-guiden visar exempel på frågor, laddningsstatus och felmeddelanden.
 - Git-diffen har kontrollerats så att AI-ändringarna är avgränsade.
 
-Automatiserade enhetstester är nästa kvalitetssteg, särskilt för validering och svarshantering i AiService. De är viktiga eftersom de gör framtida ändringar säkrare.
+Automatiserade enhetstester finns för AI-controllerns validering, lyckat svar och felhantering. De gör framtida ändringar säkrare.
 
 ## Framtids säkring
 
