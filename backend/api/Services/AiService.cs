@@ -22,48 +22,77 @@ public class AiService : IAiService
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            throw new InvalidOperationException("OpenAI API key saknas.");
+            throw new InvalidOperationException("OpenAI API-nyckel saknas.");
         }
-
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", apiKey);
 
         var requestBody = new
         {
             model = "gpt-5-mini",
+            instructions = """
+                Du är Innovia Hubs AI-guide.
+                Hjälp användaren att förstå hur Innovia Hub fungerar.
+                Ge korta, tydliga svar på svenska.
+                Du får bara ge information och vägledning.
+                Du får inte skapa, ändra eller ta bort bokningar och du får inte påstå att du har utfört en bokning.
+                Om du saknar tillräcklig information om Innovia Hub ska du säga det tydligt i stället för att gissa.
+                Innovia Hub används för att hitta och boka resurser, se tillgänglighet och hantera bokningar.
+                Exempel på resurser är skrivbord, mötesrum, VR-headset och AI-server.
+                När en användare frågar hur en bokning görs ska du förklara att användaren väljer resurs, datum och ledig tid och sedan genomför bokningen i gränssnittet.
+                """,
             input = question
         };
 
         var json = JsonSerializer.Serialize(requestBody);
 
-        using var content = new StringContent(
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://api.openai.com/v1/responses"
+        );
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", apiKey);
+
+        request.Content = new StringContent(
             json,
             Encoding.UTF8,
             "application/json"
         );
 
-        var response = await _httpClient.PostAsync(
-            "https://api.openai.com/v1/responses",
-            content
-        );
-
+        using var response = await _httpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
-                $"OpenAI API returnerade fel: {response.StatusCode}"
+                $"OpenAI API returnerade statuskod {response.StatusCode}."
             );
         }
 
         using var document = JsonDocument.Parse(responseBody);
 
-        var outputText = document.RootElement
-            .GetProperty("output")[0]
-            .GetProperty("content")[0]
-            .GetProperty("text")
-            .GetString();
+        var output = document.RootElement.GetProperty("output");
 
-        return outputText ?? "Jag kunde inte hitta ett svar.";
+        foreach (var item in output.EnumerateArray())
+        {
+            if (!item.TryGetProperty("content", out var content))
+            {
+                continue;
+            }
+
+            foreach (var contentItem in content.EnumerateArray())
+            {
+                if (contentItem.TryGetProperty("text", out var text))
+                {
+                    var value = text.GetString();
+
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+
+        return "Jag kunde inte hitta ett svar från AI-tjänsten.";
     }
 }
