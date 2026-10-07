@@ -1,9 +1,11 @@
 using api.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/ai")]
 public class AiController : ControllerBase
 {
@@ -22,14 +24,15 @@ public class AiController : ControllerBase
             return BadRequest("Frågan får inte vara tom.");
         }
 
+        if (question.Length > 1000)
+        {
+            return BadRequest("Frågan får vara högst 1000 tecken.");
+        }
+
         try
         {
             var answer = await _aiService.AskAsync(question);
-
-            return Ok(new
-            {
-                answer
-            });
+            return Ok(new { answer });
         }
         catch (Exception)
         {
