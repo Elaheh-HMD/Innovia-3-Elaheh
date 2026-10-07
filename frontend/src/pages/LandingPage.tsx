@@ -7,6 +7,7 @@ import TimeSlots from "../components/TimeSlots";
 import Resources from "../components/Resources";
 import Bookings from "../components/Bookings";
 import AiAssistant from "../components/AiAssistant";
+import AiAssistant from "../components/AiAssistant";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -243,6 +244,7 @@ export default function LandingPage() {
                     )}
 
                     <Bookings key={bookingsRefreshKey} />
+                    <AiAssistant />
                     <AiAssistant />
                 </div>
             </main>
