@@ -7,6 +7,8 @@ namespace api.Services;
 
 public class AiService : IAiService
 {
+    private const string OpenAiEndpoint = "https://api.openai.com/v1/responses";
+
     private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
 
@@ -25,35 +27,29 @@ public class AiService : IAiService
             throw new InvalidOperationException("OpenAI API-nyckel saknas.");
         }
 
+        using var request = new HttpRequestMessage(HttpMethod.Post, OpenAiEndpoint);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
         var requestBody = new
         {
             model = "gpt-5-mini",
             instructions = """
-                Du är Innovia Hubs AI-guide.
-                Hjälp användaren att förstå hur Innovia Hub fungerar.
-                Ge korta, tydliga svar på svenska.
-                Du får bara ge information och vägledning.
-                Du får inte skapa, ändra eller ta bort bokningar och du får inte påstå att du har utfört en bokning.
-                Om du saknar tillräcklig information om Innovia Hub ska du säga det tydligt i stället för att gissa.
-                Innovia Hub används för att hitta och boka resurser, se tillgänglighet och hantera bokningar.
-                Exempel på resurser är skrivbord, mötesrum, VR-headset och AI-server.
-                När en användare frågar hur en bokning görs ska du förklara att användaren väljer resurs, datum och ledig tid och sedan genomför bokningen i gränssnittet.
+                Du är Innovia Hubs AI-guide. Hjälp användaren att förstå hur Innovia Hub fungerar.
+                Ge korta, tydliga och praktiska svar på svenska.
+                Du får endast ge information och vägledning. Du får inte skapa, ändra eller ta bort bokningar.
+                Om du inte har tillräcklig information ska du säga det tydligt och hänvisa användaren till
+                den vanliga bokningsvyn eller en administratör. Hitta inte på funktioner, regler eller
+                tillgänglighet som du inte känner till.
+                
+                Innovia Hub är en coworking- och forskningsplattform där användare kan boka resurser
+                och se tillgänglighet. Bokningsbara resurstyper är skrivbord, mötesrum, VR-headset och
+                AI-server. Användaren väljer resurs, datum och ledig tid i bokningsvyn.
                 """,
             input = question
         };
 
-        var json = JsonSerializer.Serialize(requestBody);
-
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            "https://api.openai.com/v1/responses"
-        );
-
-        request.Headers.Authorization =
-            new AuthenticationHeaderValue("Bearer", apiKey);
-
         request.Content = new StringContent(
-            json,
+            JsonSerializer.Serialize(requestBody),
             Encoding.UTF8,
             "application/json"
         );
@@ -64,35 +60,37 @@ public class AiService : IAiService
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
-                $"OpenAI API returnerade statuskod {response.StatusCode}."
+                $"OpenAI API returnerade fel: {response.StatusCode}"
             );
         }
 
         using var document = JsonDocument.Parse(responseBody);
 
-        var output = document.RootElement.GetProperty("output");
-
-        foreach (var item in output.EnumerateArray())
+        foreach (var output in document.RootElement
+                     .GetProperty("output")
+                     .EnumerateArray())
         {
-            if (!item.TryGetProperty("content", out var content))
+            if (!output.TryGetProperty("content", out var content))
             {
                 continue;
             }
 
-            foreach (var contentItem in content.EnumerateArray())
+            foreach (var item in content.EnumerateArray())
             {
-                if (contentItem.TryGetProperty("text", out var text))
+                if (item.TryGetProperty("type", out var type) &&
+                    type.GetString() == "output_text" &&
+                    item.TryGetProperty("text", out var text))
                 {
-                    var value = text.GetString();
+                    var answer = text.GetString();
 
-                    if (!string.IsNullOrWhiteSpace(value))
+                    if (!string.IsNullOrWhiteSpace(answer))
                     {
-                        return value;
+                        return answer;
                     }
                 }
             }
         }
 
-        return "Jag kunde inte hitta ett svar från AI-tjänsten.";
+        return "Jag kunde inte hitta ett svar just nu.";
     }
 }
