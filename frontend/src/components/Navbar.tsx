@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./css/Navbar.module.css";
-import AiAssistant from "./AiAssistant";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -15,8 +14,7 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <nav className={styles.navbar}>
+    <nav className={styles.navbar}>
       <h1 className={styles.logo}>Innovia</h1>
 
       <div>
@@ -38,8 +36,6 @@ export default function Navbar() {
           {isLoggedIn ? "Logga ut" : "Logga in"}
         </button>
       </div>
-      </nav>
-      {isLoggedIn && <AiAssistant />}
-    </>
+    </nav>
   );
 }
