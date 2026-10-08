@@ -1,6 +1,7 @@
 using api.Controllers;
 using api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Xunit;
 
 namespace Api.Tests;
 
