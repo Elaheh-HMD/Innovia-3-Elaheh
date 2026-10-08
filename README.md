@@ -52,7 +52,7 @@ cd backend\api
 Projektet använder .NET User Secrets för JWT-nyckeln:
 
 ```powershell
-dotnet user-secrets set "Jwt:Key" "8xV!qP2mZ#7kL9wR4nT6yH1cF5sJ3dG0aB@eU7iK2pN9vX4rM6zQ1hW8fC5tY3jL"
+dotnet user-secrets set "Jwt:Key" "<din-JWT-nyckel>"
 ```
 
 JWT-nyckeln för projektet tillhandahålls separat.
@@ -124,6 +124,39 @@ Starta frontend i en separat terminal:
 cd frontend
 npm run dev
 ```
+
+## AI-guide
+
+Innovia Hubs AI-guide är en inloggningsskyddad funktion som hjälper användaren att förstå hur plattformen fungerar.
+
+AI-guiden:
+- tar emot frågor via backendens `POST /api/ai/ask`
+- använder OpenAI via backend, inte direkt från frontend
+- använder en separat `IAiService` och `AiService`, vilket gör lösningen enklare att vidareutveckla
+- hämtar API-nyckeln från .NET User Secrets lokalt
+- får endast ge information och vägledning och ska inte skapa, ändra eller ta bort bokningar
+- begränsar frågor till högst 1000 tecken
+
+### Testa backendens enhetstester
+
+Från projektets rotmapp:
+
+```powershell
+dotnet test backend/api.Tests/api.Tests.csproj
+```
+
+Enhetstesterna täcker tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
+
+### AI-nyckel lokalt
+
+API-nyckeln ska aldrig läggas i Git eller frontend-koden. Lägg den lokalt i User Secrets:
+
+```powershell
+cd backend\api
+dotnet user-secrets set "OpenAI:ApiKey" "DIN_API_NYCKEL"
+```
+
+I produktion ska nyckeln lagras i en säker secret manager.
 
 ## Kort om systemet
 
