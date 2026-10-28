@@ -29,7 +29,7 @@ export default function LandingPage() {
                             Gå till landnings-vy
                         </button>
                     </section>
-                    <Bookings />
+                    <Bookings adminView />
                 </div>
 
                 <div className={styles.resourceStatusAndUserListWrapper}>
