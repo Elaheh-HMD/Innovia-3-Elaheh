@@ -7,6 +7,7 @@ import TimeSlots from "../components/TimeSlots";
 import Resources from "../components/Resources";
 import Bookings from "../components/Bookings";
 import AiAssistant from "../components/AiAssistant";
+import { isAdmin } from "../auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -169,12 +170,14 @@ export default function LandingPage() {
                             genomföra en bokning.
                         </p>
 
-                        <button
-                            className={styles.adminButton}
-                            onClick={() => navigate("/admin")}
-                        >
-                            Gå till admin-vy
-                        </button>
+                        {isAdmin() && (
+                            <button
+                                className={styles.adminButton}
+                                onClick={() => navigate("/admin")}
+                            >
+                                Gå till admin-vy
+                            </button>
+                        )}
                     </section>
                 </div>
 

@@ -32,13 +32,14 @@ namespace api.Controllers
             _timeService = timeService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var bookings = await _bookingRepository.GetAllAsync();
+        [Authorize(Roles = "Admin")]
+[HttpGet]
+public async Task<IActionResult> GetAll()
+{
+    var bookings = await _bookingRepository.GetAllAsync();
 
-            return Ok(bookings.Select(b => b.ToBookingDto()));
-        }
+    return Ok(bookings.Select(b => b.ToBookingDto()));
+}
 
         [HttpGet("mine")]
         public async Task<IActionResult> GetMyBookings()
@@ -55,17 +56,30 @@ namespace api.Controllers
             return Ok(bookings.Select(b => b.ToBookingDto()));
         }
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById([FromRoute] int id)
-        {
-            var booking = await _bookingRepository.GetByIdAsync(id);
+public async Task<IActionResult> GetById([FromRoute] int id)
+{
+    var booking = await _bookingRepository.GetByIdAsync(id);
 
-            if (booking == null)
-            {
-                return NotFound();
-            }
+    if (booking == null)
+    {
+        return NotFound();
+    }
 
-            return Ok(booking.ToBookingDto());
-        }
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var isAdmin = User.IsInRole("Admin");
+
+    if (userId == null)
+    {
+        return Unauthorized();
+    }
+
+    if (booking.UserId != userId && !isAdmin)
+    {
+        return Forbid();
+    }
+
+    return Ok(booking.ToBookingDto());
+}
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteBookingByID([FromRoute] int id)
