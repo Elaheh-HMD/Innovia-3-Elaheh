@@ -32,6 +32,7 @@ namespace api.Controllers
             _timeService = timeService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -62,6 +63,19 @@ namespace api.Controllers
             if (booking == null)
             {
                 return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (booking.UserId != userId && !isAdmin)
+            {
+                return Forbid();
             }
 
             return Ok(booking.ToBookingDto());
