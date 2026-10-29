@@ -55,9 +55,10 @@ Den lokala utvecklingsmiljön använder frontend med Vite, backend med .NET
 och PostgreSQL via Docker Compose. Lokal API-adress som dokumenterats i
 projektet är `http://localhost:5197`.
 
-En verifierad publik driftsättningsadress har inte dokumenterats här.
-Före inlämning måste den faktiska driftsättningen, miljövariablerna,
-databasanslutningen och eventuella CORS-inställningar kontrolleras.
+En Render Blueprint och en Dockerfile har lagts till som grund för driftsättning,
+men en verifierad publik driftsättningsadress finns ännu inte. Före inlämning
+måste tjänsterna startas och den faktiska driftsättningen, miljövariablerna,
+databasanslutningen och CORS-inställningarna kontrolleras.
 Hemligheter får inte checkas in i Git.
 
 ## 8. Kända begränsningar och framtida förbättringar
