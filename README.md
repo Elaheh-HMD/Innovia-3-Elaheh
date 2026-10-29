@@ -59,7 +59,7 @@ JWT-nyckeln för projektet tillhandahålls separat.
 
 ### 4. Uppdatera databasen
 
-På en ny databas behöver EF Core-migrationerna köras:
+Backend tillämpar EF Core-migrationer automatiskt när den startar. Du kan också köra migrationerna manuellt från `backend/api`:
 
 ```powershell
 dotnet ef database update
@@ -247,3 +247,16 @@ En publik driftsättning är inte konfigurerad automatiskt av GitHub. När backe
 - IoT-integrationen använder `VITE_IOT_HUB_URL`, `VITE_IOT_RULES_API_URL`, `VITE_IOT_REGISTRY_API_URL`, `VITE_IOT_TENANT_SLUG` och `VITE_IOT_TENANT_ID` när dessa tjänster finns tillgängliga. Om IoT-servern inte körs ska gränssnittet visa anslutnings-/felstatus i stället för att anta att data finns.
 
 Efter att miljövariabler har ändrats måste frontend byggas om. Använd endast publika adresser i frontendvariabler; lägg aldrig hemligheter i `VITE_*`-variabler eftersom de exponeras i webbläsaren.
+
+
+### Administratörskonto
+
+I lokal utvecklingsmiljö skapas ett demo-admin-konto om inget annat har konfigurerats:
+- E-post: `admin@innoviahub.se`
+- Lösenord: `Admin123!`
+
+**Använd aldrig dessa standarduppgifter i produktion.** I den hostade miljön ska `Admin__Email` och `Admin__Password` anges som hemliga miljövariabler. Dela eventuella testkonton med läraren via en lämplig privat kanal, inte i ett offentligt README.
+
+### Render
+
+Repositoryt innehåller `render.yaml` och `backend/api/Dockerfile` som startpunkt för driftsättning via Render Blueprint. En offentlig URL finns inte förrän Blueprint har skapats och tjänsterna har startat. Kontrollera alla hemligheter och miljövariabler i Render innan du demonstrerar appen.
