@@ -229,3 +229,21 @@ Se [PRESENTATION.md](PRESENTATION.md) för presentationsunderlag.
 ### Säkerhet
 Lägg inte API-nycklar, lösenord eller andra hemligheter i Git. Konfigurera
 miljövariabler och secrets i den miljö där backend körs.
+
+
+## Driftsättning och miljövariabler
+
+En publik driftsättning är inte konfigurerad automatiskt av GitHub. När backend och frontend driftsätts på olika domäner behöver följande värden konfigureras i respektive hostingtjänst:
+
+**Backend**
+- `ConnectionStrings__DefaultConnection`: anslutningssträng till den hostade PostgreSQL-databasen.
+- `Jwt__Key`: en stark, privat JWT-nyckel. Lägg den inte i Git.
+- `Jwt__Issuer` och `Jwt__Audience`: måste matcha värdena som används när JWT-token skapas och valideras.
+- `OpenAI__ApiKey`: OpenAI-nyckeln om AI-funktionen ska användas.
+- `Cors__AllowedOrigins__0`: frontendens exakta HTTPS-origin, till exempel `https://din-app.example`. Behåll inte enbart localhost i produktion.
+
+**Frontend (byggvariabler)**
+- `VITE_API_URL`: backendens publika basadress, utan avslutande snedstreck.
+- IoT-integrationen använder `VITE_IOT_HUB_URL`, `VITE_IOT_RULES_API_URL`, `VITE_IOT_REGISTRY_API_URL`, `VITE_IOT_TENANT_SLUG` och `VITE_IOT_TENANT_ID` när dessa tjänster finns tillgängliga. Om IoT-servern inte körs ska gränssnittet visa anslutnings-/felstatus i stället för att anta att data finns.
+
+Efter att miljövariabler har ändrats måste frontend byggas om. Använd endast publika adresser i frontendvariabler; lägg aldrig hemligheter i `VITE_*`-variabler eftersom de exponeras i webbläsaren.
