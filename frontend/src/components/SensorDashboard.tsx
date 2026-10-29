@@ -32,7 +32,7 @@ type AlertItem = {
 
 const HUB_URL = import.meta.env.VITE_IOT_HUB_URL || "http://localhost:5103/hub/telemetry";
 const RULES_URL = import.meta.env.VITE_IOT_RULES_API_URL || "http://localhost:5000";
-const REGISTRY_URL = "http://localhost:5101";
+const REGISTRY_URL = import.meta.env.VITE_IOT_REGISTRY_API_URL || "http://localhost:5101";
 const TENANT = import.meta.env.VITE_IOT_TENANT_SLUG || "innovia";
 const TENANT_ID = import.meta.env.VITE_IOT_TENANT_ID || "996cc7d8-99b0-4a7e-8c33-7618b03f1f5e";
 
@@ -60,7 +60,7 @@ export default function SensorDashboard() {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data: Device[] = await response.json();
-                if (active) setDevices(data.filter(device => device.status === "active"));
+                if (active) setDevices(data);
             } catch {
                 if (active) setError("Kunde inte hämta enhetslistan från Device Registry.");
             }
@@ -217,6 +217,9 @@ export default function SensorDashboard() {
                         <article className={styles.metric} key={device.id}>
                             <h3>{device.serial}</h3>
                             <small>{device.model}</small>
+                            <small>
+                                Status: {device.status === "active" ? "Aktiv" : "Frånkopplad"}
+                            </small>
 
                             <p>Temperatur</p>
                             <strong>
