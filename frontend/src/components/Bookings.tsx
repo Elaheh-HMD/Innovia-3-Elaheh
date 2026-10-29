@@ -32,12 +32,12 @@ export default function Bookings({ adminView = false }: { adminView?: boolean })
 
   console.log("now: " + now);
 
-  const passedBookings = useMemo(
+  const currentBookings = useMemo(
     () => bookings.filter((b) => Date.parse(b.endTime) > now),
     [bookings, now],
   );
-  const activeBookings = useMemo(
-    () => bookings.filter((b) => now > Date.parse(b.endTime)),
+  const pastBookings = useMemo(
+    () => bookings.filter((b) => Date.parse(b.endTime) <= now),
     [bookings, now],
   );
 
@@ -150,7 +150,7 @@ export default function Bookings({ adminView = false }: { adminView?: boolean })
       if (response.ok) {
         setBookings(
           bookings.filter((booking) => {
-            return booking.bookingId! == id;
+            return booking.bookingId !== id;
           }),
         );
       } else {
@@ -161,13 +161,8 @@ export default function Bookings({ adminView = false }: { adminView?: boolean })
 
   // const visibleBookings = showAll && !showPassed ? bookings : bookings.slice(0, 5);
   function visibleBookings() {
-    return showAll && !showPassed
-      ? activeBookings
-      : showAll && showPassed
-        ? passedBookings
-        : !showAll && showPassed
-          ? passedBookings.slice(0, 5)
-          : activeBookings.slice(0, 5);
+    const selectedBookings = showPassed ? pastBookings : currentBookings;
+    return showAll ? selectedBookings : selectedBookings.slice(0, 5);
   }
 
   return (
