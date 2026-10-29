@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import { isAdmin } from "./auth";
+import SensorDashboardPage from "./pages/SensorDashboardPage";
 
 function AdminRoute() {
     const token = localStorage.getItem("token");
@@ -12,7 +13,15 @@ function AdminRoute() {
     if (!isAdmin()) return <Navigate to="/" replace />;
     return <AdminPage />;
 }
+function SensorRoute() {
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return <SensorDashboardPage />;
+}
 export default function App() {
     return (
         <BrowserRouter>
@@ -20,9 +29,8 @@ export default function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/admin" element={<AdminRoute />} />
+                <Route path="/sensors" element={<SensorRoute />} />
             </Routes>
         </BrowserRouter>
     );
 }
-
-

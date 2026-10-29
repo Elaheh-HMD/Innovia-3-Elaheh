@@ -8,7 +8,6 @@ type CalendarProps = {
   onDateSelect: (date: Date) => void;
 };
 
-const overviewHours = Array.from({ length: 24 }, (_, index) => index);
 
 export default function Calendar({
   selectedDate,

@@ -208,3 +208,24 @@ Om frontend saknar dependencies:
 cd frontend
 npm install
 ```
+
+## Komplettering inför inlämning
+
+### AI-assistent
+AI-funktionen finns bakom `POST /api/ai/ask` och kräver autentisering.
+Frågor får inte vara tomma eller längre än 1 000 tecken. OpenAI-nyckeln
+ska konfigureras på backend och får inte placeras i frontend.
+
+### Sensorvy
+Sensorvyn finns under `/sensors`. IoT-systemet körs separat från webbappen.
+Kontrollera att statusen för frånkopplade enheter visas korrekt i den miljö
+som demonstreras.
+
+### VG-reflektion och presentation
+Se [vg-reflektion.md](vg-reflektion.md) för arkitektur, tekniska val,
+realtidskommunikation, begränsningar och framtida förbättringar.
+Se [PRESENTATION.md](PRESENTATION.md) för presentationsunderlag.
+
+### Säkerhet
+Lägg inte API-nycklar, lösenord eller andra hemligheter i Git. Konfigurera
+miljövariabler och secrets i den miljö där backend körs.

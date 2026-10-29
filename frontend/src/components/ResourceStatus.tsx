@@ -5,7 +5,7 @@ import * as signalR from "@microsoft/signalr";
 const API_URL = import.meta.env.VITE_API_URL;
 
 type ResourceAvailability = {
-  resourceType: number;
+  resourceType: number | string;
   totalResources: number;
   availableResources: number;
 };
@@ -55,7 +55,7 @@ export default function ResourceStatus() {
     fetchResourceStatus();
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_URL}/Hubs/booking}`)
+      .withUrl(`${API_URL}/Hubs/Booking`)
       .withAutomaticReconnect()
       .build();
 
@@ -84,15 +84,24 @@ export default function ResourceStatus() {
     };
   }, []);
 
-  const getResourceName = (resourceType: number) => {
-    switch (resourceType) {
-      case 1:
-        return "Drop-in skrivbord";
-      case 2:
+  const getResourceName = (resourceType: number | string) => {
+    const value = String(resourceType).trim().toLowerCase();
+
+    switch (value) {
+      case "1":
+      case "skrivbord":
+        return "Skrivbord";
+      case "2":
+      case "mötesrum":
+      case "motesrum":
         return "Mötesrum";
-      case 3:
+      case "3":
+      case "vrheadset":
+      case "vr-headset":
         return "VR-headset";
-      case 4:
+      case "4":
+      case "aiserver":
+      case "ai-server":
         return "AI-server";
       default:
         return "Okänd resurs";

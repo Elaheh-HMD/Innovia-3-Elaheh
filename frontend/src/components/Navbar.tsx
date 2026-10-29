@@ -18,6 +18,14 @@ export default function Navbar() {
       <h1 className={styles.logo}>Innovia</h1>
 
       <div>
+        {isLoggedIn && (
+  <button
+    className={styles.loginButton}
+    onClick={() => navigate("/sensors")}
+  >
+    Sensor Dashboard
+  </button>
+)}
         {isLoggedIn && location.pathname === "/" && (
           <button
             className={styles.loginButton}
