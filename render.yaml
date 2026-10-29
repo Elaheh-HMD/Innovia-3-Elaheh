@@ -23,7 +23,7 @@ services:
       - key: Jwt__Audience
         value: Innovia3
       - key: Jwt__Key
-        sync: false
+        generateValue: true
       - key: Admin__Email
         sync: false
       - key: Admin__Password
