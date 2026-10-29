@@ -42,3 +42,12 @@ jobs:
         run: npm ci
       - name: Build frontend
         run: npm run build
+
+  docker-build:
+    name: Backend Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build --file backend/api/Dockerfile --tag innovia-api:ci .
