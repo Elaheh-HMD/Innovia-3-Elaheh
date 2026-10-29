@@ -1,0 +1,48 @@
+databases:
+  - name: innovia-elaheh-db
+    databaseName: innoviahub
+    user: innovia
+    plan: free
+
+services:
+  - type: web
+    name: innovia-elaheh-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/api/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: innovia-elaheh-db
+          property: connectionString
+      - key: Jwt__Issuer
+        value: Innovia3
+      - key: Jwt__Audience
+        value: Innovia3
+      - key: Jwt__Key
+        sync: false
+      - key: Admin__Email
+        sync: false
+      - key: Admin__Password
+        sync: false
+      - key: OpenAI__ApiKey
+        sync: false
+      - key: Cors__AllowedOrigins__0
+        value: https://innovia-elaheh-web.onrender.com
+
+  - type: web
+    name: innovia-elaheh-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://innovia-elaheh-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
