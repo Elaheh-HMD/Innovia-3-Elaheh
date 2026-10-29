@@ -15,13 +15,29 @@ namespace api.Data
             var userManager = services.GetRequiredService<UserManager<User>>();
 
             const string adminRole = "Admin";
-            const string adminEmail = "admin@innoviahub.se";
-
-            var adminPassword = "Admin123!";
+            var configuration = services.GetRequiredService<IConfiguration>();
+            var environment = services.GetRequiredService<IHostEnvironment>();
 
             if (!await roleManager.RoleExistsAsync(adminRole))
             {
                 await roleManager.CreateAsync(new IdentityRole(adminRole));
+            }
+
+            var adminEmail = configuration["Admin:Email"];
+            var adminPassword = configuration["Admin:Password"];
+
+            // Keep convenient demo credentials only in local development.
+            if (environment.IsDevelopment())
+            {
+                adminEmail ??= "admin@innoviahub.se";
+                adminPassword ??= "Admin123!";
+            }
+
+            // Production admin credentials must be supplied through secure configuration.
+            if (string.IsNullOrWhiteSpace(adminEmail) ||
+                string.IsNullOrWhiteSpace(adminPassword))
+            {
+                return;
             }
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
