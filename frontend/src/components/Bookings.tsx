@@ -14,7 +14,7 @@ type Booking = {
   userEmail: string;
 };
 
-export default function Bookings() {
+export default function Bookings({ adminView = false }: { adminView?: boolean }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,7 +53,8 @@ export default function Bookings() {
           throw new Error("Ingen inloggningstoken hittades.");
         }
 
-        const response = await fetch(`${API_URL}/api/Bookings/mine`, {
+        const endpoint = adminView ? `${API_URL}/api/Bookings` : `${API_URL}/api/Bookings/mine`;
+        const response = await fetch(endpoint, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,7 +125,7 @@ export default function Bookings() {
     return () => {
       connection.stop();
     };
-  }, []);
+  }, [adminView]);
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString("sv-SE");
@@ -146,7 +147,7 @@ export default function Bookings() {
         Authorization: `Bearer ${token}`,
       },
     }).then((response) => {
-      if (response.status === 200) {
+      if (response.ok) {
         setBookings(
           bookings.filter((booking) => {
             return booking.bookingId! == id;

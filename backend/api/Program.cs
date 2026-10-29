@@ -66,6 +66,8 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AvailabilityService>();
 builder.Services.AddScoped<TimeService>();
 
+builder.Services.AddHttpClient<IAiService, AiService>();
+
 builder.Services
     .AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()

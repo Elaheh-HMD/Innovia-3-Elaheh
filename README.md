@@ -52,7 +52,7 @@ cd backend\api
 Projektet använder .NET User Secrets för JWT-nyckeln:
 
 ```powershell
-dotnet user-secrets set "Jwt:Key" "8xV!qP2mZ#7kL9wR4nT6yH1cF5sJ3dG0aB@eU7iK2pN9vX4rM6zQ1hW8fC5tY3jL"
+dotnet user-secrets set "Jwt:Key" "<din-JWT-nyckel>"
 ```
 
 JWT-nyckeln för projektet tillhandahålls separat.
@@ -125,6 +125,39 @@ cd frontend
 npm run dev
 ```
 
+## AI-guide
+
+Innovia Hubs AI-guide är en inloggningsskyddad funktion som hjälper användaren att förstå hur plattformen fungerar.
+
+AI-guiden:
+- tar emot frågor via backendens `POST /api/ai/ask`
+- använder OpenAI via backend, inte direkt från frontend
+- använder en separat `IAiService` och `AiService`, vilket gör lösningen enklare att vidareutveckla
+- hämtar API-nyckeln från .NET User Secrets lokalt
+- får endast ge information och vägledning och ska inte skapa, ändra eller ta bort bokningar
+- begränsar frågor till högst 1000 tecken
+
+### Testa backendens enhetstester
+
+Från projektets rotmapp:
+
+```powershell
+dotnet test backend/api.Tests/api.Tests.csproj
+```
+
+Enhetstesterna täcker tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
+
+### AI-nyckel lokalt
+
+API-nyckeln ska aldrig läggas i Git eller frontend-koden. Lägg den lokalt i User Secrets:
+
+```powershell
+cd backend\api
+dotnet user-secrets set "OpenAI:ApiKey" "DIN_API_NYCKEL"
+```
+
+I produktion ska nyckeln lagras i en säker secret manager.
+
 ## Kort om systemet
 
 Innovia Hub hanterar fyra typer av bokningsbara resurser:
@@ -175,3 +208,24 @@ Om frontend saknar dependencies:
 cd frontend
 npm install
 ```
+
+## Komplettering inför inlämning
+
+### AI-assistent
+AI-funktionen finns bakom `POST /api/ai/ask` och kräver autentisering.
+Frågor får inte vara tomma eller längre än 1 000 tecken. OpenAI-nyckeln
+ska konfigureras på backend och får inte placeras i frontend.
+
+### Sensorvy
+Sensorvyn finns under `/sensors`. IoT-systemet körs separat från webbappen.
+Kontrollera att statusen för frånkopplade enheter visas korrekt i den miljö
+som demonstreras.
+
+### VG-reflektion och presentation
+Se [vg-reflektion.md](vg-reflektion.md) för arkitektur, tekniska val,
+realtidskommunikation, begränsningar och framtida förbättringar.
+Se [PRESENTATION.md](PRESENTATION.md) för presentationsunderlag.
+
+### Säkerhet
+Lägg inte API-nycklar, lösenord eller andra hemligheter i Git. Konfigurera
+miljövariabler och secrets i den miljö där backend körs.

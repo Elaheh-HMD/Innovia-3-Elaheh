@@ -1,1 +1,12 @@
 dev_README.md
+# Build artifacts
+**/bin/
+**/obj/
+frontend/node_modules/
+frontend/dist/
+
+# Local secrets and environment settings
+.env
+.env.*
+!.env.example
+appsettings.Local.json
