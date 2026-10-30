@@ -29,7 +29,7 @@ Innovia Hub är en webbapplikation för ett coworking- och forskningscenter. Anv
 - **Backend API:** https://innovia-elaheh-api.onrender.com
 - **Databas:** PostgreSQL på Render
 
-Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln `VITE_API_URL` för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. För att AI-guiden ska fungera i produktion måste `OpenAI__ApiKey` vara konfigurerad med en giltig OpenAI API-nyckel under API-tjänstens Environment-inställningar i Render. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
+Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln `VITE_API_URL` för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. AI-guiden i produktion kräver en giltig nyckel i miljövariabeln `OpenAI__ApiKey` under API-tjänstens Environment-inställningar i Render. En ny API-nyckel har tillhandahållits efter att den tidigare nyckeln returnerade `401 Unauthorized – expired_secret_key`; den nya nyckeln måste konfigureras i Render innan live-anropet kan verifieras. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
 
 Render-databasens anslutnings-URL konverteras i backend till ett anslutningsformat som Npgsql kan använda.
 
@@ -114,7 +114,7 @@ Kör backendens tester från projektets rotmapp:
 dotnet test backend/api.Tests/api.Tests.csproj
 ```
 
-AI-controllerns enhetstester omfattar bland annat tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten. Fel från AI-leverantören loggas på backend så att driftproblem kan diagnostiseras utan att API-nyckeln exponeras.
+AI-controllerns fyra enhetstester använder en mockad AI-tjänst och kontrollerar controllerlogiken utan att göra riktiga anrop till OpenAI: tom fråga avvisas, fråga över maxgränsen avvisas, ett lyckat tjänstesvar returneras korrekt och ett fel från tjänsten hanteras. Dessa tester verifierar API:ets beteende men bevisar inte att en extern API-nyckel fungerar. Fel från AI-leverantören loggas på backend så att driftproblem kan diagnostiseras utan att API-nyckeln exponeras.
 
 ## Realtidskommunikation
 
@@ -126,7 +126,7 @@ För att manuellt kontrollera funktionen kan applikationen öppnas i två webbl�
 
 AI-guiden nås via backendens POST /api/ai/ask och kräver autentisering. Tomma frågor och frågor längre än 1 000 tecken avvisas. OpenAI anropas från backend via IAiService och AiService; API-nyckeln exponeras inte i frontend.
 
-AI-guiden är avsedd för information och vägledning om Innovia Hub och ska inte skapa, ändra eller ta bort bokningar.
+AI-guiden är avsedd för information och vägledning om Innovia Hub och ska inte skapa, ändra eller ta bort bokningar. Vid den senaste kontrollen behövde en ny API-nyckel från kursläraren läggas in i Render. Därför ska live-funktionen betraktas som verifierad först efter att den nya nyckeln har konfigurerats och en riktig fråga har fått ett svar.
 
 ## IoT och offline-läge
 
@@ -153,7 +153,7 @@ Kontot är avsett för demonstration av projektet. Använd inte samma lösenord 
 2. Testa att skapa en bokning och kontrollera att den visas i bokningslistan.
 3. Kontrollera att en överlappande bokning av samma resurs avvisas.
 4. Öppna applikationen i två webbläsarfönster och kontrollera SignalR-uppdateringen.
-5. Öppna AI-guiden och ställ en fråga om hur plattformen används.
+5. Testa AI-guiden först efter att en giltig nyckel har konfigurerats i Render; ställ en fråga om hur plattformen används och kontrollera att ett svar visas.
 6. Öppna Sensor Dashboard och kontrollera att offline-status visas när IoT-servern inte är tillgänglig.
 
 ## Individuellt vidareutvecklade funktioner
