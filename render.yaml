@@ -42,16 +42,6 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://innovia-elaheh-api.onrender.com
-      - key: VITE_IOT_HUB_URL
-        value: https://innovia-iot-hub.onrender.com/hub/telemetry
-      - key: VITE_IOT_RULES_API_URL
-        value: https://innovia-iot-rules.onrender.com
-      - key: VITE_IOT_REGISTRY_API_URL
-        value: https://innovia-iot-registry.onrender.com
-      - key: VITE_IOT_TENANT_SLUG
-        value: innovia
-      - key: VITE_IOT_TENANT_ID
-        sync: false
     routes:
       - type: rewrite
         source: /*
