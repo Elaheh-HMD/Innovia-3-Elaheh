@@ -13,6 +13,7 @@ En viktig lärdom är att en funktion inte är färdig bara för att den fungera
 - **PostgreSQL och Entity Framework Core:** används för beständig lagring och för att hantera databasåtkomst med entiteter och migrationer.
 - **ASP.NET Core Identity och JWT:** används för inloggning och för att identifiera användaren vid API-anrop. Behörighet kontrolleras i backend.
 - **SignalR:** används för att informera anslutna klienter när bokningar förändras, så att bokningslistan kan uppdateras utan att användaren behöver ladda om sidan.
+- **Samlad tillgänglighetskontroll:** kalendern hämtar dagens lediga tider med en API-förfrågan. Backend hämtar överlappande bokningar med en databasfråga för datumet och räknar ut timintervallen i minnet. Det minskar antalet samtidiga anrop och tar hänsyn till svensk lokal tid.
 - **OpenAI API:** används av en separat AI-tjänst i backend. Frontend anropar backend och API-nyckeln hålls på serversidan i stället för att exponeras i webbläsaren.
 
 Jag valde att lägga AI-anropet i en separat tjänst (`IAiService` och `AiService`). Det separerar integrationen mot AI-leverantören från controllern och gör lösningen enklare att testa och vidareutveckla.
@@ -57,7 +58,7 @@ Det är viktigt att skilja mellan att händelsen skickas i koden och att hela fl
 
 ## 5. AI-implementation
 
-AI-guiden nås via backendens `POST /api/ai/ask`. Endpointen kräver autentisering. Tomma frågor och frågor längre än 1 000 tecken avvisas. Backend anropar OpenAI Responses API via `AiService` och returnerar svaret till frontend.
+AI-guiden nås via backendens `POST /api/ai/ask`. Endpointen kräver autentisering. Tomma frågor och frågor längre än 1 000 tecken avvisas. Backend anropar OpenAI Responses API via `AiService` och returnerar svaret till frontend. Fel från AI-anropet loggas på serversidan för att skilja exempelvis saknad konfiguration från fel hos API-leverantören utan att visa hemligheter för klienten.
 
 AI-guiden är avsedd att ge information om hur Innovia Hub används. Instruktionerna begränsar den till vägledning och den ska inte skapa, ändra eller ta bort bokningar. API-nyckeln läses från backendens konfiguration och ska aldrig läggas i frontendkod eller versionshanteras.
 
@@ -69,7 +70,7 @@ Applikationen är driftsatt på Render:
 - **Backend API:** https://innovia-elaheh-api.onrender.com
 - **Databas:** PostgreSQL på Render.
 
-Frontend och backend är separata tjänster. Frontendens byggkonfiguration använder `VITE_API_URL` för att anropa backend. Backendens miljökonfiguration innehåller databasanslutning, JWT-inställningar, CORS-origin och OpenAI-nyckel. Hemligheter hanteras som miljövariabler i driftmiljön och ska inte checkas in i Git.
+Frontend och backend är separata tjänster. Frontendens byggkonfiguration använder `VITE_API_URL` för att anropa backend. Backendens miljökonfiguration innehåller databasanslutning, JWT-inställningar, CORS-origin och OpenAI-nyckel. AI-guiden i produktion kräver att `OpenAI__ApiKey` är satt till en giltig OpenAI API-nyckel i Render-tjänstens Environment-inställningar. Hemligheter hanteras som miljövariabler i driftmiljön och ska inte checkas in i Git.
 
 Render tillhandahåller PostgreSQL-anslutningen som en databas-URL. Backend omvandlar den till ett anslutningsformat som Npgsql kan använda.
 
@@ -90,6 +91,7 @@ Jag har också behövt skilja på funktioner som tillhör bokningsplattformen oc
 ## 9. Kända begränsningar och vad jag skulle förbättra
 
 - Jag skulle utöka automatiserade tester för hela bokningsflödet och behörighetskontroller.
+- Jag skulle lägga till integrationstester för den samlade dagliga tillgänglighetskontrollen och övervaka externa AI-anrop i produktionsmiljön.
 - Jag skulle lägga till mer övervakning och strukturerad loggning för externa tjänster.
 - Jag skulle förbättra hanteringen av återanslutning och statusinformation för SignalR.
 - Jag skulle driftsätta och integrera IoT-tjänsterna i en senare version, även om det inte krävs för denna inlämning.
