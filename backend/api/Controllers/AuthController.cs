@@ -26,23 +26,39 @@ namespace api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterUserDto registerUserDto)
         {
+            if (string.IsNullOrWhiteSpace(registerUserDto.Email) ||
+                string.IsNullOrWhiteSpace(registerUserDto.Password))
+            {
+                return BadRequest("E-post och lösenord måste anges.");
+            }
+
+            var email = registerUserDto.Email.Trim();
             var user = new User
             {
-                Email = registerUserDto.Email,
-                UserName = registerUserDto.Email
+                Email = email,
+                UserName = email
             };
 
-            var created = await _userRepository.CreateUserAsync(
+            var result = await _userRepository.CreateUserWithResultAsync(
                 user,
                 registerUserDto.Password
             );
 
-            if (!created)
+            if (!result.Succeeded)
             {
-                return BadRequest("Kunde inte skapa användare");
+                var errors = result.Errors
+                    .Select(error => error.Description)
+                    .Distinct()
+                    .ToArray();
+
+                return BadRequest(new
+                {
+                    message = "Användaren kunde inte skapas.",
+                    errors
+                });
             }
 
-            return Ok("Användaren skapades");
+            return Ok(new { message = "Användaren skapades." });
         }
 
         [HttpPost("login")]
