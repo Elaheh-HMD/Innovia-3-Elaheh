@@ -260,3 +260,34 @@ I lokal utvecklingsmiljö skapas ett demo-admin-konto om inget annat har konfigu
 ### Render
 
 Repositoryt innehåller `render.yaml` och `backend/api/Dockerfile` som startpunkt för driftsättning via Render Blueprint. En offentlig URL finns inte förrän Blueprint har skapats och tjänsterna har startat. Kontrollera alla hemligheter och miljövariabler i Render innan du demonstrerar appen.
+
+
+---
+
+## Inlämning – individuell version
+
+**Driftsatt applikation:** https://innovia-elaheh-web.onrender.com
+
+**GitHub-repository:** https://github.com/Elaheh-HMD/Innovia-3-Elaheh
+
+### Så testar du applikationen
+
+1. Öppna den driftsatta länken ovan.
+2. Registrera ett eget användarkonto eller logga in med testkontot som har delats separat.
+3. Testa bokningsflödet: välj en resurstyp, datum och tid och skapa en bokning.
+4. Kontrollera att bokningen visas i listan över bokningar.
+5. Öppna applikationen i två webbläsarfönster och kontrollera att en bokningsändring uppdateras via SignalR.
+6. Testa AI-guiden efter inloggning genom att fråga exempelvis: ”Hur bokar jag ett mötesrum?”
+7. Öppna Sensor Dashboard. IoT-servern är en separat och valfri del i denna inlämning. När den är offline ska gränssnittet tydligt visa att IoT inte är tillgängligt; bokningsdelen ska fortfarande fungera.
+
+**Testkonto:** Inloggningsuppgifter delas separat med läraren. Av säkerhetsskäl publiceras inga lösenord eller API-nycklar i detta repository.
+
+### Individuellt vidareutvecklade funktioner
+
+- AI-guide via backendens `POST /api/ai/ask`, med validering av frågor och serverbaserad hantering av OpenAI-nyckeln.
+- Sensor Dashboard för IoT-enheter, mätvärden och larm, med tydlig status när IoT-servern är offline.
+- Förbättringar av driftsättning och konfiguration för den individuella webbapplikationen.
+
+### VG-reflektion
+
+Se [vg-reflektion.md](vg-reflektion.md) för tekniska val, arkitektur, realtidskommunikation, driftsättning, utmaningar och möjliga förbättringar.

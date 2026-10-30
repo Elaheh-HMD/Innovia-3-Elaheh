@@ -62,7 +62,7 @@ export default function SensorDashboard() {
                 const data: Device[] = await response.json();
                 if (active) setDevices(data);
             } catch {
-                if (active) setError("Kunde inte hämta enhetslistan från Device Registry.");
+                if (active) setError("IoT-servern är inte tillgänglig just nu. Enhetslistan kan inte hämtas, men bokningar och övriga delar av Innovia fungerar fortfarande.");
             }
         }
 
@@ -83,7 +83,7 @@ export default function SensorDashboard() {
                     );
                 }
             } catch {
-                if (active) setError("Kunde inte hämta tidigare larm.");
+                if (active) setError("IoT-servern är inte tillgänglig just nu. Tidigare larm kan inte hämtas, men bokningar och övriga delar av Innovia fungerar fortfarande.");
             }
         }
 
@@ -154,9 +154,9 @@ export default function SensorDashboard() {
             } catch (err) {
                 if (active) {
                     console.error("SignalR connection failed:", err);
-                    setConnection("Anslutningen misslyckades");
+                    setConnection("IoT-servern är offline");
                     setError(
-                        "Liveanslutningen misslyckades. Kontrollera att SignalR Hub körs."
+                        "IoT-servern är inte tillgänglig just nu. Enheter och livedata kan inte visas, men bokningar och övriga delar av Innovia fungerar fortfarande."
                     );
                 }
             }
@@ -197,14 +197,14 @@ export default function SensorDashboard() {
                         Live sensor measurements and alerts
                     </p>
                 </div>
-                <span className={`${styles.status} ${
+                <span role="status" aria-live="polite" className={`${styles.status} ${
                     connection === "Ansluten" ? styles.connected : ""
                 }`}>
                     {connection}
                 </span>
             </div>
 
-            {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={styles.error} role="status" aria-live="polite">{error}</p>}
 
             <h3>Enheter ({devices.length})</h3>
             <div className={styles.metrics}>
