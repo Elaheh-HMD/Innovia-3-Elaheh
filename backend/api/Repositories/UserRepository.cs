@@ -26,9 +26,13 @@ namespace api.Repositories
 
         public async Task<bool> CreateUserAsync(User user, string password)
         {
-            var result = await _userManager.CreateAsync(user, password);
-
+            var result = await CreateUserWithResultAsync(user, password);
             return result.Succeeded;
+        }
+
+        public async Task<IdentityResult> CreateUserWithResultAsync(User user, string password)
+        {
+            return await _userManager.CreateAsync(user, password);
         }
 
         public async Task<List<User>> GetAllAsync()
