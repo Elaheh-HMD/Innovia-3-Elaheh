@@ -52,11 +52,48 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(rawConnectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string 'DefaultConnection' is missing."
+    );
+}
+
+// Render provides PostgreSQL connection URLs (postgres:// or postgresql://).
+// Convert them to the key/value format expected by Npgsql.
+string connectionString;
+if (Uri.TryCreate(rawConnectionString, UriKind.Absolute, out var databaseUri) &&
+    (databaseUri.Scheme == "postgres" || databaseUri.Scheme == "postgresql"))
+{
+    var credentials = databaseUri.UserInfo.Split(':', 2);
+    if (credentials.Length != 2)
+    {
+        throw new InvalidOperationException(
+            "The PostgreSQL connection URL does not contain valid username/password credentials."
+        );
+    }
+
+    connectionString = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.IsDefaultPort ? 5432 : databaseUri.Port,
+        Database = Uri.UnescapeDataString(databaseUri.AbsolutePath.TrimStart('/')),
+        Username = Uri.UnescapeDataString(credentials[0]),
+        Password = Uri.UnescapeDataString(credentials[1]),
+        SslMode = Npgsql.SslMode.Require
+    }.ConnectionString;
+}
+else
+{
+    // Preserve conventional key=value connection strings for local development.
+    connectionString = rawConnectionString;
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    );
+    options.UseNpgsql(connectionString);
 });
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
