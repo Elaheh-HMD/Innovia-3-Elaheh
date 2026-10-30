@@ -119,8 +119,7 @@ namespace api.Controllers
             {
                 var localStart = date.ToDateTime(
                     new TimeOnly(hour, 0), DateTimeKind.Unspecified);
-                var localEnd = date.ToDateTime(
-                    new TimeOnly(hour + 1, 0), DateTimeKind.Unspecified);
+                var localEnd = localStart.AddHours(1);
 
                 var startUtc = _timeService.ToUtc(localStart);
                 var endUtc = _timeService.ToUtc(localEnd);
