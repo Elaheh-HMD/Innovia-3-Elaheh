@@ -42,19 +42,19 @@ Render-databasens anslutnings-URL konverteras i backend till ett anslutningsform
 
 ### 1. Klona projektet
 
-\x60\x60\x60bash
+```bash
 git clone -b dev https://github.com/Elaheh-HMD/Innovia-3-Elaheh.git
 cd Innovia-3-Elaheh
-\x60\x60\x60
+```
 
 ### 2. Starta PostgreSQL
 
 Kör från projektets rotmapp:
 
-\x60\x60\x60bash
+```bash
 docker compose up -d
 docker compose ps
-\x60\x60\x60
+```
 
 Kontrollera att PostgreSQL-containern körs.
 
@@ -62,16 +62,16 @@ Kontrollera att PostgreSQL-containern körs.
 
 Gå till backendprojektet:
 
-\x60\x60\x60bash
+```bash
 cd backend/api
-\x60\x60\x60
+```
 
 Konfigurera en egen JWT-nyckel och OpenAI-nyckel med .NET User Secrets:
 
-\x60\x60\x60bash
+```bash
 dotnet user-secrets set "Jwt:Key" "<din-jwt-nyckel>"
 dotnet user-secrets set "OpenAI:ApiKey" "<din-openai-api-nyckel>"
-\x60\x60\x60
+```
 
 Använd aldrig riktiga nycklar i källkoden eller i Git.
 
@@ -79,9 +79,9 @@ Använd aldrig riktiga nycklar i källkoden eller i Git.
 
 Från backend/api:
 
-\x60\x60\x60bash
+```bash
 dotnet run
-\x60\x60\x60
+```
 
 Backendens lokala adress är http://localhost:5197.
 
@@ -89,11 +89,11 @@ Backendens lokala adress är http://localhost:5197.
 
 Öppna en ny terminal från projektets rotmapp:
 
-\x60\x60\x60bash
+```bash
 cd frontend
 npm install
 npm run dev
-\x60\x60\x60
+```
 
 Frontendens lokala adress är http://localhost:5173.
 
@@ -103,15 +103,15 @@ Om den lokala API-adressen skiljer sig från standardvärdet behöver VITE_API_U
 
 Backend tillämpar EF Core-migrationer vid uppstart. Migrationer kan även köras manuellt från backend/api:
 
-\x60\x60\x60bash
+```bash
 dotnet ef database update
-\x60\x60\x60
+```
 
 Kör backendens tester från projektets rotmapp:
 
-\x60\x60\x60bash
+```bash
 dotnet test backend/api.Tests/api.Tests.csproj
-\x60\x60\x60
+```
 
 AI-controllerns enhetstester omfattar bland annat tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
 
