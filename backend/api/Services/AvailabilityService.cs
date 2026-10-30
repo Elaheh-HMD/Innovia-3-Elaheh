@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-/* using System.Security.AccessControl; */
 using System.Threading.Tasks;
 using api.Dtos.ResourceDtos;
 using api.Interfaces;
@@ -40,23 +39,25 @@ namespace api.Services
 
         public async Task<ResourceTypeAvailabilityDto> GetResourceTypeAvailabilityAsync(ResourceType type, DateTime startTime, DateTime endTime)
         {
-            var resources = await _resourceRepository.GetByTypeAsync(type);
+            var resources = (await _resourceRepository.GetByTypeAsync(type)).ToList();
+            var resourceIds = resources.Select(resource => resource.ResourceId).ToArray();
 
-            var availableResources = 0;
+            // Fetch all overlapping bookings in one database query instead of
+            // issuing one AnyAsync query for every resource.
+            var overlappingBookings = await _bookingRepository.GetOverlappingAsync(
+                startTime, endTime, resourceIds);
 
-            foreach (var resource in resources)
-            {
-                var isAvailable = await _bookingRepository.IsResourceAvailableAsync(startTime, endTime, resource.ResourceId);
-                if (isAvailable)
-                {
-                    availableResources++;
-                }
-            }
+            var unavailableResourceIds = overlappingBookings
+                .Select(booking => booking.ResourceId)
+                .Distinct()
+                .ToHashSet();
+
             return new ResourceTypeAvailabilityDto
             {
                 ResourceType = type,
                 TotalResources = resources.Count,
-                AvailableResources = availableResources
+                AvailableResources = resources.Count(resource =>
+                    !unavailableResourceIds.Contains(resource.ResourceId))
             };
         }
     }
