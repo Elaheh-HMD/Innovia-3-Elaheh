@@ -113,6 +113,18 @@ namespace api.Controllers
                 }
             }
 
+            var resourceIds = resources.Select(resource => resource.ResourceId).ToArray();
+            var firstLocalHour = date.ToDateTime(
+                new TimeOnly(BookingStartHour, 0), DateTimeKind.Unspecified);
+            var endLocalHour = date.AddDays(1).ToDateTime(
+                TimeOnly.MinValue, DateTimeKind.Unspecified);
+            var firstUtcHour = _timeService.ToUtc(firstLocalHour);
+            var endUtcHour = _timeService.ToUtc(endLocalHour);
+
+            // Read all overlapping bookings for the selected date in one database query.
+            var overlappingBookings = (await _bookingRepository.GetOverlappingAsync(
+                firstUtcHour, endUtcHour, resourceIds)).ToList();
+
             var result = new List<object>();
 
             for (var hour = BookingStartHour; hour < BookingEndHour; hour++)
@@ -123,16 +135,13 @@ namespace api.Controllers
 
                 var startUtc = _timeService.ToUtc(localStart);
                 var endUtc = _timeService.ToUtc(localEnd);
-                var availableResources = 0;
 
-                foreach (var resource in resources)
-                {
-                    if (await _bookingRepository.IsResourceAvailableAsync(
-                        startUtc, endUtc, resource.ResourceId))
-                    {
-                        availableResources++;
-                    }
-                }
+                var unavailableResourceIds = overlappingBookings
+                    .Where(booking => startUtc < booking.EndTime && endUtc > booking.StartTime)
+                    .Select(booking => booking.ResourceId)
+                    .ToHashSet();
+
+                var availableResources = resourceIds.Count(id => !unavailableResourceIds.Contains(id));
 
                 result.Add(new
                 {
