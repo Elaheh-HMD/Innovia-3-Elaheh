@@ -9,19 +9,18 @@ export default function RegisterUser() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  //   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
       const token = localStorage.getItem("token");
-
       if (!token) {
         setError("Du måste vara inloggad som admin.");
         return;
@@ -33,20 +32,31 @@ export default function RegisterUser() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!response.ok) {
-        const errorMessage = await response.text();
-        console.log("Register error:", response.status, errorMessage);
+        const responseText = await response.text();
+        let errorMessage = responseText || "Användaren kunde inte skapas.";
 
-        setError(errorMessage || "Något gick fel");
+        try {
+          const payload = JSON.parse(responseText);
+          if (Array.isArray(payload.errors) && payload.errors.length > 0) {
+            errorMessage = payload.errors.join(" ");
+          } else if (payload.message) {
+            errorMessage = payload.message;
+          }
+        } catch {
+          // The API may return a plain-text error.
+        }
+
+        setError(errorMessage);
         return;
       }
-      
+
+      setMessage("Användaren skapades. Personen kan nu logga in.");
+      setEmail("");
+      setPassword("");
     } catch {
       setError("Kunde inte ansluta till servern. Försök igen.");
     } finally {
@@ -55,7 +65,6 @@ export default function RegisterUser() {
   };
 
   return (
-    <>
     <section>
       <button
         className={styles.backButton}
@@ -83,12 +92,12 @@ export default function RegisterUser() {
         />
 
         {error && <p role="alert">{error}</p>}
+        {message && <p role="status">{message}</p>}
 
-        <button type="submit">
-          {loading ? "Registrerar in..." : "Registrera"}
+        <button type="submit" disabled={loading}>
+          {loading ? "Registrerar..." : "Registrera"}
         </button>
       </form>
     </section>
-    </>
   );
 }
