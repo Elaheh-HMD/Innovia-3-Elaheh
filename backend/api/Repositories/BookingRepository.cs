@@ -39,6 +39,23 @@ namespace api.Repositories
             return !alreadyBooked;
         }
 
+        public async Task<IEnumerable<Booking>> GetOverlappingAsync(
+            DateTime startTime,
+            DateTime endTime,
+            IReadOnlyCollection<int> resourceIds)
+        {
+            if (resourceIds.Count == 0)
+            {
+                return Array.Empty<Booking>();
+            }
+
+            return await _context.Bookings
+                .Where(b => resourceIds.Contains(b.ResourceId) &&
+                            startTime < b.EndTime &&
+                            endTime > b.StartTime)
+                .ToListAsync();
+        }
+
         public async Task<Booking?> CreateBookingAsync(Booking booking)
         {
             var alreadyBooked = await IsResourceAvailableAsync(booking.StartTime, booking.EndTime, booking.ResourceId);
