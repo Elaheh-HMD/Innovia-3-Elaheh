@@ -50,6 +50,7 @@ namespace api.Repositories
             }
 
             return await _context.Bookings
+                .AsNoTracking()
                 .Where(b => resourceIds.Contains(b.ResourceId) &&
                             startTime < b.EndTime &&
                             endTime > b.StartTime)
