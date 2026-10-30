@@ -1,6 +1,7 @@
 using api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace api.Controllers;
 
@@ -11,6 +12,11 @@ public class AiController : ControllerBase
 {
     private readonly IAiService _aiService;
     private readonly ILogger<AiController> _logger;
+
+    public AiController(IAiService aiService)
+        : this(aiService, NullLogger<AiController>.Instance)
+    {
+    }
 
     public AiController(IAiService aiService, ILogger<AiController> logger)
     {
