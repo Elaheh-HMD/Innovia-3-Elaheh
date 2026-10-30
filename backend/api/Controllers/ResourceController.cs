@@ -1,15 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using api.Enums;
 using api.Interfaces;
-using api.Models;
-using api.Repositories;
 using api.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 
 namespace api.Controllers
 {
@@ -17,23 +9,29 @@ namespace api.Controllers
     [Route("api/[controller]s")]
     public class ResourceController : ControllerBase
     {
+        private const int BookingStartHour = 7;
+        private const int BookingEndHour = 24;
+
         private readonly IResourceRepository _resourceRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly AvailabilityService _availabilityService;
-        public ResourceController(IResourceRepository resourceRepository, IBookingRepository bookingRepository, AvailabilityService availabilityService)
+        private readonly TimeService _timeService;
+
+        public ResourceController(
+            IResourceRepository resourceRepository,
+            IBookingRepository bookingRepository,
+            AvailabilityService availabilityService,
+            TimeService timeService)
         {
             _resourceRepository = resourceRepository;
             _bookingRepository = bookingRepository;
             _availabilityService = availabilityService;
+            _timeService = timeService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
             var resources = await _resourceRepository.GetAllAsync();
             return Ok(resources);
         }
@@ -41,75 +39,112 @@ namespace api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var resource = await _resourceRepository.GetResourceAsync(id);
-
-            if (resource == null)
-            {
-                return NotFound();
-            }
-            return Ok(resource);
+            return resource == null ? NotFound() : Ok(resource);
         }
 
         [HttpGet("types/{type}")]
         public async Task<IActionResult> GetByType([FromRoute] ResourceType type)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var resources = await _resourceRepository.GetByTypeAsync(type);
-
             return Ok(resources);
         }
 
         [HttpGet("{resourceId:int}/bookings")]
         public async Task<IActionResult> GetBookingsByResourceId([FromRoute] int resourceId)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var bookings = await _bookingRepository.GetByResourceIdAsync(resourceId);
-
             return Ok(bookings);
         }
 
         [HttpGet("{id:int}/availability")]
-        public async Task<IActionResult> GetAvailabilityById(int id, [FromQuery] DateTime startTime, [FromQuery] DateTime endTime)
+        public async Task<IActionResult> GetAvailabilityById(
+            int id,
+            [FromQuery] DateTime startTime,
+            [FromQuery] DateTime endTime)
         {
             if (startTime >= endTime)
             {
                 return BadRequest("Starttiden måste vara lägre än sluttiden");
             }
 
-            var availability = await _availabilityService.GetResourceAvailabilityAsync(id, startTime, endTime);
+            var availability = await _availabilityService.GetResourceAvailabilityAsync(
+                id, startTime, endTime);
 
-            if (availability == null)
+            return availability == null ? NotFound() : Ok(availability);
+        }
+
+        [HttpGet("types/{type}/availability")]
+        public async Task<IActionResult> GetAvailabilityByType(
+            ResourceType type,
+            [FromQuery] DateTime startTime,
+            [FromQuery] DateTime endTime)
+        {
+            if (startTime >= endTime)
             {
-                return NotFound();
+                return BadRequest("Starttiden måste vara lägre än sluttiden");
             }
+
+            var availability = await _availabilityService.GetResourceTypeAvailabilityAsync(
+                type, startTime, endTime);
 
             return Ok(availability);
         }
 
-        [HttpGet("types/{type}/availability")]
-        public async Task<IActionResult> GetAvailabilityByType(ResourceType type, [FromQuery] DateTime startTime, [FromQuery] DateTime endTime)
+        // One request returns all hourly availability for a local Swedish date.
+        // This avoids dozens of simultaneous HTTP requests from the weekly calendar.
+        [HttpGet("types/{type}/availability/day")]
+        public async Task<IActionResult> GetAvailabilityForDay(
+            ResourceType type,
+            [FromQuery] DateOnly date,
+            [FromQuery] int? resourceId = null)
         {
-            if (startTime >= endTime)
+            var resources = (await _resourceRepository.GetByTypeAsync(type)).ToList();
+
+            if (resourceId.HasValue)
             {
-                return BadRequest("Starttiden måste vara lägre än sluttiden");
+                resources = resources
+                    .Where(resource => resource.ResourceId == resourceId.Value)
+                    .ToList();
+
+                if (resources.Count == 0)
+                {
+                    return NotFound("Resursen tillhör inte den valda resurstypen.");
+                }
             }
 
-            var availability = await _availabilityService.GetResourceTypeAvailabilityAsync(type, startTime, endTime);
+            var result = new List<object>();
 
-            return Ok(availability);
+            for (var hour = BookingStartHour; hour < BookingEndHour; hour++)
+            {
+                var localStart = date.ToDateTime(
+                    new TimeOnly(hour, 0), DateTimeKind.Unspecified);
+                var localEnd = localStart.AddHours(1);
+
+                var startUtc = _timeService.ToUtc(localStart);
+                var endUtc = _timeService.ToUtc(localEnd);
+                var availableResources = 0;
+
+                foreach (var resource in resources)
+                {
+                    if (await _bookingRepository.IsResourceAvailableAsync(
+                        startUtc, endUtc, resource.ResourceId))
+                    {
+                        availableResources++;
+                    }
+                }
+
+                result.Add(new
+                {
+                    startTime = DateTime.SpecifyKind(startUtc, DateTimeKind.Utc),
+                    endTime = DateTime.SpecifyKind(endUtc, DateTimeKind.Utc),
+                    isAvailable = availableResources > 0,
+                    availableResources,
+                    totalResources = resources.Count
+                });
+            }
+
+            return Ok(result);
         }
     }
 }

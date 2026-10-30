@@ -1,6 +1,7 @@
 using api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace api.Controllers;
 
@@ -10,10 +11,17 @@ namespace api.Controllers;
 public class AiController : ControllerBase
 {
     private readonly IAiService _aiService;
+    private readonly ILogger<AiController> _logger;
 
     public AiController(IAiService aiService)
+        : this(aiService, NullLogger<AiController>.Instance)
+    {
+    }
+
+    public AiController(IAiService aiService, ILogger<AiController> logger)
     {
         _aiService = aiService;
+        _logger = logger;
     }
 
     [HttpPost("ask")]
@@ -34,8 +42,9 @@ public class AiController : ControllerBase
             var answer = await _aiService.AskAsync(question);
             return Ok(new { answer });
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            _logger.LogError(exception, "Innovia AI request failed.");
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
                 "AI-tjänsten kunde inte svara just nu."

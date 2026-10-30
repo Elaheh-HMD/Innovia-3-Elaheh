@@ -70,8 +70,10 @@ export default function TimeSlots({
 
   useEffect(() => {
     async function fetchResources() {
-      if (selectedResourceType === null) {
-        setResources([]);
+      if (overview || selectedResourceType === null) {
+        if (selectedResourceType === null) {
+          setResources([]);
+        }
         return;
       }
 
@@ -92,9 +94,11 @@ export default function TimeSlots({
     }
 
     fetchResources();
-  }, [selectedResourceType]);
+  }, [selectedResourceType, overview]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function checkAvailability() {
       if (!selectedDate || selectedResourceType === null) {
         setSlots([]);
@@ -109,96 +113,98 @@ export default function TimeSlots({
       onSlotSelect(null);
 
       try {
-        const newSlots = createSlots(selectedDate);
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+        const day = String(selectedDate.getDate()).padStart(2, "0");
+        const params = new URLSearchParams({ date: `${year}-${month}-${day}` });
 
-        const availabilityResults = await Promise.all(
-          newSlots.map(async (slot) => {
-            const start = new Date(slot.startTime);
-            const hour = start.getHours();
+        if (selectedResourceId !== null) {
+          params.set("resourceId", String(selectedResourceId));
+        }
 
-            // Tider utanför bokningsfönstret visas,
-            // men kan inte bokas.
-            if (hour < BOOKING_START_HOUR || hour >= BOOKING_END_HOUR) {
-              return {
-                ...slot,
-                isAvailable: false,
-                status: "locked" as const,
-              };
-            }
-
-            const end = new Date(slot.endTime);
-
-            const params = new URLSearchParams({
-              startTime: start.toISOString(),
-              endTime: end.toISOString(),
-            });
-
-            let response;
-
-            if (selectedResourceId !== null) {
-              /* användaren har valt ett specifikt ID */
-              response = await fetch(
-                `${API_URL}/api/Resources/${selectedResourceId}/availability?${params.toString()}`,
-              );
-            } else {
-              /* första lediga -> kontrollera hela resurstypen */
-              response = await fetch(
-                `${API_URL}/api/Resources/types/${selectedResourceType}/availability?${params.toString()}`,
-              );
-            }
-
-            if (!response.ok) {
-              throw new Error("Kunde inte kontrollera tillgänglighet.");
-            }
-
-            const data = await response.json();
-
-            console.log(
-              "Availability:",
-              selectedResourceType,
-              selectedResourceId,
-              data,
-            );
-
-            if (selectedResourceId !== null) {
-              return {
-                ...slot,
-                isAvailable: data.isAvailable,
-                status: data.isAvailable
-                  ? ("green" as const)
-                  : ("red" as const),
-              };
-            }
-
-            let status: "green" | "yellow" | "red";
-
-            if (data.availableResources === 0) {
-              status = "red";
-            } else if (data.availableResources < data.totalResources) {
-              status = "yellow";
-            } else {
-              status = "green";
-            }
-
-            return {
-              ...slot,
-              isAvailable: data.availableResources > 0,
-              status,
-            };
-          }),
+        const response = await fetch(
+          `${API_URL}/api/Resources/types/${encodeURIComponent(selectedResourceType)}/availability/day?${params.toString()}`,
+          { signal: controller.signal },
         );
 
-        setSlots(availabilityResults);
+        if (!response.ok) {
+          throw new Error(`Kunde inte kontrollera tillgänglighet (HTTP ${response.status}).`);
+        }
+
+        const availability = await response.json();
+        const availabilityByStart = new Map<number, {
+          isAvailable: boolean;
+          availableResources: number;
+          totalResources: number;
+        }>();
+        availability.forEach((item: {
+          startTime: string;
+          isAvailable: boolean;
+          availableResources: number;
+          totalResources: number;
+        }) => {
+          availabilityByStart.set(new Date(item.startTime).getTime(), item);
+        });
+
+        const daySlots = createSlots(selectedDate).map((slot) => {
+          const hour = new Date(slot.startTime).getHours();
+
+          if (hour < BOOKING_START_HOUR || hour >= BOOKING_END_HOUR) {
+            return { ...slot, isAvailable: false, status: "locked" as const };
+          }
+
+          const data = availabilityByStart.get(
+            new Date(slot.startTime).getTime(),
+          ) as {
+            isAvailable: boolean;
+            availableResources: number;
+            totalResources: number;
+          } | undefined;
+
+          if (!data) {
+            return { ...slot, isAvailable: false, status: "locked" as const };
+          }
+
+          if (selectedResourceId !== null) {
+            return {
+              ...slot,
+              isAvailable: data.isAvailable,
+              status: data.isAvailable ? "green" as const : "red" as const,
+            };
+          }
+
+          const status =
+            data.availableResources === 0
+              ? "red" as const
+              : data.availableResources < data.totalResources
+                ? "yellow" as const
+                : "green" as const;
+
+          return {
+            ...slot,
+            isAvailable: data.isAvailable,
+            status,
+          };
+        });
+
+        setSlots(daySlots);
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
         console.error("Fel vid kontroll av tillgänglighet:", error);
-        setError("Kunde inte hämta lediga tider.");
+        setError("Kunde inte hämta lediga tider. Försök igen om en liten stund.");
         setSlots([]);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
-    checkAvailability();
+    void checkAvailability();
+
+    return () => controller.abort();
   }, [selectedDate, selectedResourceId, selectedResourceType, onSlotSelect]);
 
   function formatTime(dateString: string) {
