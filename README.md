@@ -29,7 +29,7 @@ Innovia Hub är en webbapplikation för ett coworking- och forskningscenter. Anv
 - **Backend API:** https://innovia-elaheh-api.onrender.com
 - **Databas:** PostgreSQL på Render
 
-Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln `VITE_API_URL` för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. AI-guiden i produktion kräver en giltig nyckel i miljövariabeln `OpenAI__ApiKey` under API-tjänstens Environment-inställningar i Render. En ny API-nyckel har tillhandahållits efter att den tidigare nyckeln returnerade `401 Unauthorized – expired_secret_key`; den nya nyckeln måste konfigureras i Render innan live-anropet kan verifieras. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
+Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln `VITE_API_URL` för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. AI-guiden i produktion använder miljövariabeln `OpenAI__ApiKey` under API-tjänstens Environment-inställningar i Render. Efter att den tidigare nyckeln returnerade `401 Unauthorized – expired_secret_key` tillhandahöll kursläraren en ny nyckel. Den nya nyckeln har konfigurerats i Render och ett live-test med en riktig fråga har gett ett svar. Själva nyckelvärdet lagras endast som hemlighet i Render och finns inte i Git. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
 
 Render-databasens anslutnings-URL konverteras i backend till ett anslutningsformat som Npgsql kan använda.
 
@@ -120,13 +120,13 @@ AI-controllerns fyra enhetstester använder en mockad AI-tjänst och kontrollera
 
 Backend exponerar BookingHub på /Hubs/Booking. När en bokning skapas eller tas bort skickar backend händelsen BookingsChanged. Frontend lyssnar på händelsen och hämtar den uppdaterade bokningslistan.
 
-För att manuellt kontrollera funktionen kan applikationen öppnas i två webbläsarfönster. En bokningsändring i det ena fönstret ska uppdatera informationen i det andra.
+Vid manuell kontroll öppnades applikationen i två webbläsarfönster med samma administratörskonto. När en bokning skapades i det ena fönstret dök den upp snabbt i det andra fönstrets bokningslista utan omladdning. Kalenderns färgmarkeringar för lediga/upptagna tider uppdateras däremot inte omedelbart via SignalR; de hämtas på nytt när kalendern laddas om eller relevanta val ändras.
 
 ## AI-guide
 
 AI-guiden nås via backendens POST /api/ai/ask och kräver autentisering. Tomma frågor och frågor längre än 1 000 tecken avvisas. OpenAI anropas från backend via IAiService och AiService; API-nyckeln exponeras inte i frontend.
 
-AI-guiden är avsedd för information och vägledning om Innovia Hub och ska inte skapa, ändra eller ta bort bokningar. Vid den senaste kontrollen behövde en ny API-nyckel från kursläraren läggas in i Render. Därför ska live-funktionen betraktas som verifierad först efter att den nya nyckeln har konfigurerats och en riktig fråga har fått ett svar.
+AI-guiden är avsedd för information och vägledning om Innovia Hub och ska inte skapa, ändra eller ta bort bokningar. Efter att kursläraren tillhandahöll en ny API-nyckel konfigurerades `OpenAI__ApiKey` i Render. En riktig fråga skickades därefter i den driftsatta applikationen och AI-guiden returnerade ett svar.
 
 ## IoT och offline-läge
 
@@ -152,8 +152,8 @@ Kontot är avsett för demonstration av projektet. Använd inte samma lösenord 
 1. Öppna den driftsatta applikationen och logga in med demoadministratörskontot ovan eller registrera ett användarkonto.
 2. Testa att skapa en bokning och kontrollera att den visas i bokningslistan.
 3. Kontrollera att en överlappande bokning av samma resurs avvisas.
-4. Öppna applikationen i två webbläsarfönster och kontrollera SignalR-uppdateringen.
-5. Testa AI-guiden först efter att en giltig nyckel har konfigurerats i Render; ställ en fråga om hur plattformen används och kontrollera att ett svar visas.
+4. Öppna applikationen i två webbläsarfönster. Skapa en bokning i det ena och kontrollera att den visas i det andra fönstrets bokningslista utan omladdning. Observera att kalenderns färgmarkeringar ännu kräver omladdning eller att relevanta val ändras.
+5. Öppna AI-guiden, ställ en fråga om hur plattformen används och kontrollera att ett svar visas. Live-anropet har verifierats efter att den nya nyckeln konfigurerades i Render.
 6. Öppna Sensor Dashboard och kontrollera att offline-status visas när IoT-servern inte är tillgänglig.
 
 ## Individuellt vidareutvecklade funktioner
