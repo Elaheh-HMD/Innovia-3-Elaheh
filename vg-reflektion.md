@@ -54,7 +54,7 @@ Backend registrerar SignalR i `Program.cs` och exponerar `BookingHub` på `/Hubs
 
 Frontendkomponenten för bokningar skapar en SignalR-anslutning till samma hubb. När klienten tar emot `BookingsChanged` hämtar den bokningslistan igen från API:et. På så sätt kan flera anslutna klienter få uppdaterad information när bokningar ändras.
 
-Det är viktigt att skilja mellan att händelsen skickas i koden och att hela flödet verifieras i produktion. Vid demonstration bör två webbläsarfönster användas: skapa eller ta bort en bokning i det ena och kontrollera att det andra uppdateras.
+Detta har även kontrollerats i den driftsatta applikationen: två webbläsarfönster öppnades med samma administratörskonto. När en bokning skapades i det ena fönstret visades den snabbt i det andra fönstrets bokningslista utan att sidan laddades om. En avgränsning är att kalenderns färgmarkeringar för tillgängliga tider inte uppdateras direkt av denna SignalR-händelse. De uppdateras när sidan laddas om eller när relevanta kalender-/resursval ändras. En framtida förbättring är att även låta kalenderkomponenten reagera på `BookingsChanged`.
 
 ## 5. AI-implementation
 
@@ -64,7 +64,7 @@ AI-guiden är avsedd att ge information om hur Innovia Hub används. Instruktion
 
 Lösningen är uppdelad i `AiController`, `IAiService` och `AiService`. Controllern ansvarar för HTTP-gränssnittet och validering, medan tjänsten ansvarar för anropet till OpenAI. Det gör controllerlogiken möjlig att testa isolerat med en mockad tjänst. Systeminstruktionen begränsar assistentens roll till att förklara hur plattformen används; den ska inte hitta på bokningsregler, tillgänglighet eller utföra bokningsåtgärder. Svaret parsas defensivt så att oväntade eller saknade fält i leverantörens svar inte hanteras som om de alltid fanns.
 
-Vid det första produktionstestet den 30 oktober 2026 svarade OpenAI med `401 Unauthorized – expired_secret_key`. Det visade att den då konfigurerade nyckeln hade gått ut. Kursläraren har därefter tillhandahållit en ny nyckel. Den ska läggas in som `OpenAI__ApiKey` i Render och därefter verifieras genom ett nytt live-test. De automatiska controller-testerna är oberoende av den externa nyckeln och ersätter inte detta produktionstest.
+Vid det första produktionstestet svarade OpenAI med `401 Unauthorized – expired_secret_key`, vilket visade att den tidigare konfigurerade nyckeln hade gått ut. Kursläraren tillhandahöll därefter en ny nyckel. Den nya nyckeln konfigurerades som `OpenAI__ApiKey` i Render och ett nytt live-test genomfördes: en riktig fråga om användning av Innovia Hub skickades från den driftsatta applikationen och AI-guiden returnerade ett begripligt svar. Själva nyckelvärdet lagras endast i Render och har inte lagts i källkoden eller Git. De automatiska controller-testerna är fortfarande separata från detta externa live-test.
 
 ## 6. Driftsättning och miljökonfiguration
 
@@ -97,6 +97,7 @@ Jag har också behövt skilja på funktioner som tillhör bokningsplattformen oc
 - Jag skulle utöka automatiserade tester för hela bokningsflödet och behörighetskontroller.
 - Jag skulle lägga till integrationstester för den samlade dagliga tillgänglighetskontrollen och övervaka externa AI-anrop i produktionsmiljön.
 - Jag skulle lägga till mer övervakning och strukturerad loggning för externa tjänster.
+- Kalenderns färgmarkeringar för lediga och upptagna tider uppdateras inte omedelbart när en annan klient skapar eller tar bort en bokning. Bokningslistan uppdateras via SignalR, men kalenderkomponenten behöver i nuläget en omladdning eller ändring av relevanta val. Jag skulle låta även kalendern lyssna på `BookingsChanged`.
 - Jag skulle förbättra hanteringen av återanslutning och statusinformation för SignalR.
 - Jag skulle driftsätta och integrera IoT-tjänsterna i en senare version, även om det inte krävs för denna inlämning.
 - Jag skulle utöka AI-guidens testning och utvärdera svarens kvalitet med fler realistiska användarfrågor.
@@ -125,7 +126,7 @@ Testerna täcker därmed både validering, normalflöde och ett felaktigt tjäns
 
 ### Manuella tester i den driftsatta applikationen
 
-Resultat för manuella tester ska baseras på vad som faktiskt har kontrollerats i produktion. AI-guidens live-test ska göras efter att den nya API-nyckeln har lagts in i Render. Övriga manuella tester är:
+Följande manuella tester har genomförts i den driftsatta applikationen: registrering och inloggning, skapande av bokning, avvisning av överlappande bokning, SignalR-uppdatering av bokningslistan i ett andra webbläsarfönster, live-svar från AI-guiden efter att den nya nyckeln konfigurerades i Render samt offline-meddelande i Sensor Dashboard.
 
 1. Logga in och kontrollera att skyddade vyer bara visas för inloggade användare.
 2. Skapa en bokning och kontrollera att den visas i bokningslistan.
