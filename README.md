@@ -19,7 +19,7 @@ Projektet består av:
 Klona projektets `dev`-branch:
 
 ```powershell
-git clone -b dev https://github.com/Innovia-3/Innovia-3.git
+git clone -b dev https://github.com/Elaheh-HMD/Innovia-3-Elaheh.git
 cd Innovia-3
 ```
 
@@ -259,7 +259,7 @@ I lokal utvecklingsmiljö skapas ett demo-admin-konto om inget annat har konfigu
 
 ### Render
 
-Repositoryt innehåller `render.yaml` och `backend/api/Dockerfile` som startpunkt för driftsättning via Render Blueprint. En offentlig URL finns inte förrän Blueprint har skapats och tjänsterna har startat. Kontrollera alla hemligheter och miljövariabler i Render innan du demonstrerar appen.
+Applikationen är driftsatt via Render Blueprint. Frontend finns på `https://innovia-elaheh-web.onrender.com` och backend på `https://innovia-elaheh-api.onrender.com`. `render.yaml` och `backend/api/Dockerfile` beskriver tjänsternas konfiguration. Kontrollera att tjänsterna är tillgängliga och att miljövariablerna är konfigurerade innan demonstration.
 
 
 ---
