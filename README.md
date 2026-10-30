@@ -1,293 +1,166 @@
 # Innovia Hub
 
-Innovia Hub är en webbapplikation för ett coworking- och forskningscenter där användare kan boka resurser och se deras tillgänglighet.
+Innovia Hub är en webbapplikation för ett coworking- och forskningscenter. Användare kan se tillgängliga resurser och boka dem. Applikationen innehåller även en AI-guide och en separat vy för IoT-sensorer.
 
-Projektet består av:
+## Teknik
 
+- **Frontend:** React, TypeScript och Vite
 - **Backend:** ASP.NET Core Web API (.NET 8)
-- **Frontend:** React + TypeScript + Vite
-- **Databas:** PostgreSQL
+- **Databas:** PostgreSQL och Entity Framework Core
+- **Autentisering och behörighet:** ASP.NET Core Identity och JWT
 - **Realtidskommunikation:** SignalR
-- **Autentisering:** ASP.NET Core Identity + JWT
-- **Databasåtkomst:** Entity Framework Core
-- **Docker:** PostgreSQL körs lokalt i Docker
+- **AI:** OpenAI API via backend
+- **Lokal databas:** Docker Compose
 
-## Kom igång
+## Funktioner
 
-### 1. Klona `dev`
+- Registrering och inloggning
+- Roller för användare och administratörer
+- Bokning av skrivbord, mötesrum, VR-headset och AI-server
+- Kontroll av resursens tillgänglighet och överlappande bokningar
+- Realtidsuppdatering av bokningar via SignalR
+- AI-guide för frågor om hur Innovia Hub används
+- Sensor Dashboard för IoT-enheter och larm, med tydlig status när IoT-tjänsterna inte är tillgängliga
 
-Klona projektets `dev`-branch:
+## Driftsatt applikation
 
-```powershell
+- **Frontend:** https://innovia-elaheh-web.onrender.com
+- **Backend API:** https://innovia-elaheh-api.onrender.com
+- **Databas:** PostgreSQL på Render
+
+Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln VITE_API_URL för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
+
+Render-databasens anslutnings-URL konverteras i backend till ett anslutningsformat som Npgsql kan använda.
+
+## Kom igång lokalt
+
+### Förutsättningar
+
+- .NET 8 SDK
+- Node.js och npm
+- Docker Desktop
+
+### 1. Klona projektet
+
+\x60\x60\x60bash
 git clone -b dev https://github.com/Elaheh-HMD/Innovia-3-Elaheh.git
-cd Innovia-3
-```
+cd Innovia-3-Elaheh
+\x60\x60\x60
 
 ### 2. Starta PostgreSQL
 
-Se till att Docker Desktop är startat.
+Kör från projektets rotmapp:
 
-Kör sedan från projektets rotmapp:
-
-```powershell
+\x60\x60\x60bash
 docker compose up -d
-```
-
-Kontrollera att PostgreSQL kör:
-
-```powershell
 docker compose ps
-```
+\x60\x60\x60
 
-Containern `innoviahub-postgres` ska ha status `Up`.
+Kontrollera att PostgreSQL-containern körs.
 
-### 3. Konfigurera JWT
+### 3. Konfigurera backendens hemligheter
 
-Gå till backend:
+Gå till backendprojektet:
 
-```powershell
-cd backend\api
-```
+\x60\x60\x60bash
+cd backend/api
+\x60\x60\x60
 
-Projektet använder .NET User Secrets för JWT-nyckeln:
+Konfigurera en egen JWT-nyckel och OpenAI-nyckel med .NET User Secrets:
 
-```powershell
-dotnet user-secrets set "Jwt:Key" "<din-JWT-nyckel>"
-```
+\x60\x60\x60bash
+dotnet user-secrets set "Jwt:Key" "<din-jwt-nyckel>"
+dotnet user-secrets set "OpenAI:ApiKey" "<din-openai-api-nyckel>"
+\x60\x60\x60
 
-JWT-nyckeln för projektet tillhandahålls separat.
+Använd aldrig riktiga nycklar i källkoden eller i Git.
 
-### 4. Uppdatera databasen
+### 4. Starta backend
 
-Backend tillämpar EF Core-migrationer automatiskt när den startar. Du kan också köra migrationerna manuellt från `backend/api`:
+Från backend/api:
 
-```powershell
-dotnet ef database update
-```
-
-Detta skapar databastabellerna och lägger in projektets seedade data.
-
-### 5. Starta backend
-
-Från `backend/api`:
-
-```powershell
+\x60\x60\x60bash
 dotnet run
-```
+\x60\x60\x60
 
-Backend körs på:
+Backendens lokala adress är http://localhost:5197.
 
-```text
-http://localhost:5197
-```
+### 5. Starta frontend
 
-Låt terminalen vara igång.
+Öppna en ny terminal från projektets rotmapp:
 
-### 6. Starta frontend
-
-Öppna en ny terminal och gå till frontend:
-
-```powershell
+\x60\x60\x60bash
 cd frontend
 npm install
 npm run dev
-```
+\x60\x60\x60
 
-Frontend körs på:
+Frontendens lokala adress är http://localhost:5173.
 
-```text
-http://localhost:5173
-```
+Om den lokala API-adressen skiljer sig från standardvärdet behöver VITE_API_URL konfigureras för frontend.
 
-Öppna adressen i webbläsaren.
+## Databas och tester
 
-## Starta projektet efter första installationen
+Backend tillämpar EF Core-migrationer vid uppstart. Migrationer kan även köras manuellt från backend/api:
 
-När databasen redan är konfigurerad behöver migrationerna och `npm install` normalt inte köras igen.
+\x60\x60\x60bash
+dotnet ef database update
+\x60\x60\x60
 
-Starta PostgreSQL från projektets rot:
+Kör backendens tester från projektets rotmapp:
 
-```powershell
-docker compose up -d
-```
+\x60\x60\x60bash
+dotnet test backend/api.Tests/api.Tests.csproj
+\x60\x60\x60
 
-Starta backend:
+AI-controllerns enhetstester omfattar bland annat tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
 
-```powershell
-cd backend\api
-dotnet run
-```
+## Realtidskommunikation
 
-Starta frontend i en separat terminal:
+Backend exponerar BookingHub på /Hubs/Booking. När en bokning skapas eller tas bort skickar backend händelsen BookingsChanged. Frontend lyssnar på händelsen och hämtar den uppdaterade bokningslistan.
 
-```powershell
-cd frontend
-npm run dev
-```
+För att manuellt kontrollera funktionen kan applikationen öppnas i två webbläsarfönster. En bokningsändring i det ena fönstret ska uppdatera informationen i det andra.
 
 ## AI-guide
 
-Innovia Hubs AI-guide är en inloggningsskyddad funktion som hjälper användaren att förstå hur plattformen fungerar.
+AI-guiden nås via backendens POST /api/ai/ask och kräver autentisering. Tomma frågor och frågor längre än 1 000 tecken avvisas. OpenAI anropas från backend via IAiService och AiService; API-nyckeln exponeras inte i frontend.
 
-AI-guiden:
-- tar emot frågor via backendens `POST /api/ai/ask`
-- använder OpenAI via backend, inte direkt från frontend
-- använder en separat `IAiService` och `AiService`, vilket gör lösningen enklare att vidareutveckla
-- hämtar API-nyckeln från .NET User Secrets lokalt
-- får endast ge information och vägledning och ska inte skapa, ändra eller ta bort bokningar
-- begränsar frågor till högst 1000 tecken
+AI-guiden är avsedd för information och vägledning om Innovia Hub och ska inte skapa, ändra eller ta bort bokningar.
 
-### Testa backendens enhetstester
+## IoT och offline-läge
 
-Från projektets rotmapp:
+IoT-systemet är separat från bokningsapplikationen och behöver inte vara driftsatt för denna inlämning. När IoT-tjänsterna inte är tillgängliga ska Sensor Dashboard visa en tydlig status. Bokningsfunktionerna ska fortsätta fungera oberoende av IoT-systemet.
 
-```powershell
-dotnet test backend/api.Tests/api.Tests.csproj
-```
+## Administratörskonto
 
-Enhetstesterna täcker tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
+Ett demoadministratörskonto är konfigurerat även i den driftsatta Render-miljön. Följande uppgifter har verifierats för inloggning i den publicerade applikationen:
 
-### AI-nyckel lokalt
+- **E-post:** admin@innoviahub.se
+- **Lösenord:** Admin123!
 
-API-nyckeln ska aldrig läggas i Git eller frontend-koden. Lägg den lokalt i User Secrets:
+Kontot är avsett för demonstration av projektet. Använd inte samma lösenord för personliga eller andra tjänster.
 
-```powershell
-cd backend\api
-dotnet user-secrets set "OpenAI:ApiKey" "DIN_API_NYCKEL"
-```
+## Inlämning
 
-I produktion ska nyckeln lagras i en säker secret manager.
+- **Driftsatt applikation:** https://innovia-elaheh-web.onrender.com
+- **GitHub-repository:** https://github.com/Elaheh-HMD/Innovia-3-Elaheh
+- **VG-reflektion:** [vg-reflektion.md](vg-reflektion.md)
 
-## Kort om systemet
+### Testa applikationen
 
-Innovia Hub hanterar fyra typer av bokningsbara resurser:
+1. Öppna den driftsatta applikationen och logga in med demoadministratörskontot ovan eller registrera ett användarkonto.
+2. Testa att skapa en bokning och kontrollera att den visas i bokningslistan.
+3. Kontrollera att en överlappande bokning av samma resurs avvisas.
+4. Öppna applikationen i två webbläsarfönster och kontrollera SignalR-uppdateringen.
+5. Öppna AI-guiden och ställ en fråga om hur plattformen används.
+6. Öppna Sensor Dashboard och kontrollera att offline-status visas när IoT-servern inte är tillgänglig.
 
-| Resurs     | Antal |
-| ---------- | ----: |
-| Skrivbord  |    15 |
-| Mötesrum   |     4 |
-| VR-headset |     4 |
-| AI-server  |     1 |
+## Individuellt vidareutvecklade funktioner
 
-Tillgänglighet beräknas utifrån befintliga bokningar och valt tidsintervall.
+- AI-guide via backendens POST /api/ai/ask, med validering och serverbaserad hantering av OpenAI-nyckeln.
+- Sensor Dashboard för IoT-enheter och larm, inklusive hantering och presentation av offline-status.
+- Förbättringar av driftsättning och miljökonfiguration för den individuella webbapplikationen.
 
-SignalR används för att uppdatera bokningsinformation i realtid. När en bokning skapas eller tas bort skickar backend eventet `BookingsChanged` till anslutna klienter.
+## VG-reflektion
 
-Användare autentiseras med ASP.NET Core Identity och JWT. Systemet har rollerna `User` och `Admin`.
-
-## Vanliga problem
-
-Om backend ger:
-
-```text
-relation "AspNetRoles" does not exist
-```
-
-har migrationerna inte körts. Kör:
-
-```powershell
-cd backend\api
-dotnet ef database update
-```
-
-Om backend inte får kontakt med PostgreSQL, kontrollera Docker:
-
-```powershell
-docker compose ps
-```
-
-och starta databasen vid behov:
-
-```powershell
-docker compose up -d
-```
-
-Om frontend saknar dependencies:
-
-```powershell
-cd frontend
-npm install
-```
-
-## Komplettering inför inlämning
-
-### AI-assistent
-AI-funktionen finns bakom `POST /api/ai/ask` och kräver autentisering.
-Frågor får inte vara tomma eller längre än 1 000 tecken. OpenAI-nyckeln
-ska konfigureras på backend och får inte placeras i frontend.
-
-### Sensorvy
-Sensorvyn finns under `/sensors`. IoT-systemet körs separat från webbappen.
-Kontrollera att statusen för frånkopplade enheter visas korrekt i den miljö
-som demonstreras.
-
-### VG-reflektion och presentation
-Se [vg-reflektion.md](vg-reflektion.md) för arkitektur, tekniska val,
-realtidskommunikation, begränsningar och framtida förbättringar.
-Se [PRESENTATION.md](PRESENTATION.md) för presentationsunderlag.
-
-### Säkerhet
-Lägg inte API-nycklar, lösenord eller andra hemligheter i Git. Konfigurera
-miljövariabler och secrets i den miljö där backend körs.
-
-
-## Driftsättning och miljövariabler
-
-En publik driftsättning är inte konfigurerad automatiskt av GitHub. När backend och frontend driftsätts på olika domäner behöver följande värden konfigureras i respektive hostingtjänst:
-
-**Backend**
-- `ConnectionStrings__DefaultConnection`: anslutningssträng till den hostade PostgreSQL-databasen.
-- `Jwt__Key`: en stark, privat JWT-nyckel. Lägg den inte i Git.
-- `Jwt__Issuer` och `Jwt__Audience`: måste matcha värdena som används när JWT-token skapas och valideras.
-- `OpenAI__ApiKey`: OpenAI-nyckeln om AI-funktionen ska användas.
-- `Cors__AllowedOrigins__0`: frontendens exakta HTTPS-origin, till exempel `https://din-app.example`. Behåll inte enbart localhost i produktion.
-
-**Frontend (byggvariabler)**
-- `VITE_API_URL`: backendens publika basadress, utan avslutande snedstreck.
-- IoT-integrationen använder `VITE_IOT_HUB_URL`, `VITE_IOT_RULES_API_URL`, `VITE_IOT_REGISTRY_API_URL`, `VITE_IOT_TENANT_SLUG` och `VITE_IOT_TENANT_ID` när dessa tjänster finns tillgängliga. Om IoT-servern inte körs ska gränssnittet visa anslutnings-/felstatus i stället för att anta att data finns.
-
-Efter att miljövariabler har ändrats måste frontend byggas om. Använd endast publika adresser i frontendvariabler; lägg aldrig hemligheter i `VITE_*`-variabler eftersom de exponeras i webbläsaren.
-
-
-### Administratörskonto
-
-I lokal utvecklingsmiljö skapas ett demo-admin-konto om inget annat har konfigurerats:
-- E-post: `admin@innoviahub.se`
-- Lösenord: `Admin123!`
-
-**Använd aldrig dessa standarduppgifter i produktion.** I den hostade miljön ska `Admin__Email` och `Admin__Password` anges som hemliga miljövariabler. Dela eventuella testkonton med läraren via en lämplig privat kanal, inte i ett offentligt README.
-
-### Render
-
-Applikationen är driftsatt via Render Blueprint. Frontend finns på `https://innovia-elaheh-web.onrender.com` och backend på `https://innovia-elaheh-api.onrender.com`. `render.yaml` och `backend/api/Dockerfile` beskriver tjänsternas konfiguration. Kontrollera att tjänsterna är tillgängliga och att miljövariablerna är konfigurerade innan demonstration.
-
-
----
-
-## Inlämning – individuell version
-
-**Driftsatt applikation:** https://innovia-elaheh-web.onrender.com
-
-**GitHub-repository:** https://github.com/Elaheh-HMD/Innovia-3-Elaheh
-
-### Så testar du applikationen
-
-1. Öppna den driftsatta länken ovan.
-2. Registrera ett eget användarkonto eller logga in med testkontot som har delats separat.
-3. Testa bokningsflödet: välj en resurstyp, datum och tid och skapa en bokning.
-4. Kontrollera att bokningen visas i listan över bokningar.
-5. Öppna applikationen i två webbläsarfönster och kontrollera att en bokningsändring uppdateras via SignalR.
-6. Testa AI-guiden efter inloggning genom att fråga exempelvis: ”Hur bokar jag ett mötesrum?”
-7. Öppna Sensor Dashboard. IoT-servern är en separat och valfri del i denna inlämning. När den är offline ska gränssnittet tydligt visa att IoT inte är tillgängligt; bokningsdelen ska fortfarande fungera.
-
-**Testkonto:** Inloggningsuppgifter delas separat med läraren. Av säkerhetsskäl publiceras inga lösenord eller API-nycklar i detta repository.
-
-### Individuellt vidareutvecklade funktioner
-
-- AI-guide via backendens `POST /api/ai/ask`, med validering av frågor och serverbaserad hantering av OpenAI-nyckeln.
-- Sensor Dashboard för IoT-enheter, mätvärden och larm, med tydlig status när IoT-servern är offline.
-- Förbättringar av driftsättning och konfiguration för den individuella webbapplikationen.
-
-### VG-reflektion
-
-Se [vg-reflektion.md](vg-reflektion.md) för tekniska val, arkitektur, realtidskommunikation, driftsättning, utmaningar och möjliga förbättringar.
+Se [vg-reflektion.md](vg-reflektion.md) för tekniska val, arkitekturöversikt, realtidskommunikation, AI-implementation, driftsättning, utmaningar och kända begränsningar.
