@@ -14,6 +14,7 @@ namespace api.Interfaces
         Task<IEnumerable<Booking>> GetByUserIdAsync(string id);
         Task<IEnumerable<Booking>> GetByResourceIdAsync(int resourceId);
         Task<bool> IsResourceAvailableAsync(DateTime startTime, DateTime endTime, int resourceId);
+        Task<IEnumerable<Booking>> GetOverlappingAsync(DateTime startTime, DateTime endTime, IReadOnlyCollection<int> resourceIds);
         Task<Booking?> CreateBookingAsync(Booking booking);
         Task<Booking?> DeleteBookingByIdAsync(int id); 
     }
