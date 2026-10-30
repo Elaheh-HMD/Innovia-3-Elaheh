@@ -130,15 +130,19 @@ export default function TimeSlots({
         }
 
         const availability = await response.json();
-        const availabilityByStart = new Map(
-          availability.map((item: {
-            startTime: string;
-            endTime: string;
-            isAvailable: boolean;
-            availableResources: number;
-            totalResources: number;
-          }) => [new Date(item.startTime).getTime(), item]),
-        );
+        const availabilityByStart = new Map<number, {
+          isAvailable: boolean;
+          availableResources: number;
+          totalResources: number;
+        }>();
+        availability.forEach((item: {
+          startTime: string;
+          isAvailable: boolean;
+          availableResources: number;
+          totalResources: number;
+        }) => {
+          availabilityByStart.set(new Date(item.startTime).getTime(), item);
+        });
 
         const daySlots = createSlots(selectedDate).map((slot) => {
           const hour = new Date(slot.startTime).getHours();
