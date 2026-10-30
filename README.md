@@ -18,6 +18,7 @@ Innovia Hub är en webbapplikation för ett coworking- och forskningscenter. Anv
 - Roller för användare och administratörer
 - Bokning av skrivbord, mötesrum, VR-headset och AI-server
 - Kontroll av resursens tillgänglighet och överlappande bokningar
+- Daglig tillgänglighetskontroll med en samlad API-förfrågan och en databasfråga per datum, i svensk lokal tid
 - Realtidsuppdatering av bokningar via SignalR
 - AI-guide för frågor om hur Innovia Hub används
 - Sensor Dashboard för IoT-enheter och larm, med tydlig status när IoT-tjänsterna inte är tillgängliga
@@ -28,7 +29,7 @@ Innovia Hub är en webbapplikation för ett coworking- och forskningscenter. Anv
 - **Backend API:** https://innovia-elaheh-api.onrender.com
 - **Databas:** PostgreSQL på Render
 
-Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln VITE_API_URL för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
+Frontend och backend är separata Render-tjänster. Frontend använder miljövariabeln `VITE_API_URL` för backendens publika adress. Backendens miljövariabler omfattar databasanslutning, JWT, CORS och OpenAI-nyckeln. För att AI-guiden ska fungera i produktion måste `OpenAI__ApiKey` vara konfigurerad med en giltig OpenAI API-nyckel under API-tjänstens Environment-inställningar i Render. Hemligheter lagras i Render-konfigurationen och ska inte checkas in i Git.
 
 Render-databasens anslutnings-URL konverteras i backend till ett anslutningsformat som Npgsql kan använda.
 
@@ -113,7 +114,7 @@ Kör backendens tester från projektets rotmapp:
 dotnet test backend/api.Tests/api.Tests.csproj
 ```
 
-AI-controllerns enhetstester omfattar bland annat tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten.
+AI-controllerns enhetstester omfattar bland annat tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten. Fel från AI-leverantören loggas på backend så att driftproblem kan diagnostiseras utan att API-nyckeln exponeras.
 
 ## Realtidskommunikation
 
