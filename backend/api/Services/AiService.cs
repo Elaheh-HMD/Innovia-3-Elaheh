@@ -28,7 +28,7 @@ public class AiService : IAiService
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, OpenAiEndpoint);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
 
         var requestBody = new
         {
@@ -40,7 +40,7 @@ public class AiService : IAiService
                 Om du inte har tillräcklig information ska du säga det tydligt och hänvisa användaren till
                 den vanliga bokningsvyn eller en administratör. Hitta inte på funktioner, regler eller
                 tillgänglighet som du inte känner till.
-                
+
                 Innovia Hub är en coworking- och forskningsplattform där användare kan boka resurser
                 och se tillgänglighet. Bokningsbara resurstyper är skrivbord, mötesrum, VR-headset och
                 AI-server. Användaren väljer resurs, datum och ledig tid i bokningsvyn.
@@ -59,8 +59,9 @@ public class AiService : IAiService
 
         if (!response.IsSuccessStatusCode)
         {
+            var providerError = GetProviderError(responseBody);
             throw new InvalidOperationException(
-                $"OpenAI API returnerade fel: {response.StatusCode}"
+                $"OpenAI API returnerade {(int)response.StatusCode} {response.StatusCode}. {providerError}"
             );
         }
 
@@ -92,5 +93,34 @@ public class AiService : IAiService
         }
 
         return "Jag kunde inte hitta ett svar just nu.";
+    }
+
+    private static string GetProviderError(string responseBody)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            if (document.RootElement.TryGetProperty("error", out var error))
+            {
+                var code = error.TryGetProperty("code", out var codeElement)
+                    ? codeElement.ToString()
+                    : null;
+                var type = error.TryGetProperty("type", out var typeElement)
+                    ? typeElement.ToString()
+                    : null;
+                var message = error.TryGetProperty("message", out var messageElement)
+                    ? messageElement.ToString()
+                    : null;
+
+                return string.Join(" ", new[] { type, code, message }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+            }
+        }
+        catch (JsonException)
+        {
+            // Do not expose an unstructured provider response in application errors.
+        }
+
+        return "OpenAI skickade ingen läsbar felbeskrivning.";
     }
 }
