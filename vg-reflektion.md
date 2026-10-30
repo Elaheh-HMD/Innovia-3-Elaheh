@@ -62,6 +62,10 @@ AI-guiden nås via backendens `POST /api/ai/ask`. Endpointen kräver autentiseri
 
 AI-guiden är avsedd att ge information om hur Innovia Hub används. Instruktionerna begränsar den till vägledning och den ska inte skapa, ändra eller ta bort bokningar. API-nyckeln läses från backendens konfiguration och ska aldrig läggas i frontendkod eller versionshanteras.
 
+Lösningen är uppdelad i `AiController`, `IAiService` och `AiService`. Controllern ansvarar för HTTP-gränssnittet och validering, medan tjänsten ansvarar för anropet till OpenAI. Det gör controllerlogiken möjlig att testa isolerat med en mockad tjänst. Systeminstruktionen begränsar assistentens roll till att förklara hur plattformen används; den ska inte hitta på bokningsregler, tillgänglighet eller utföra bokningsåtgärder. Svaret parsas defensivt så att oväntade eller saknade fält i leverantörens svar inte hanteras som om de alltid fanns.
+
+Vid det första produktionstestet den 30 oktober 2026 svarade OpenAI med `401 Unauthorized – expired_secret_key`. Det visade att den då konfigurerade nyckeln hade gått ut. Kursläraren har därefter tillhandahållit en ny nyckel. Den ska läggas in som `OpenAI__ApiKey` i Render och därefter verifieras genom ett nytt live-test. De automatiska controller-testerna är oberoende av den externa nyckeln och ersätter inte detta produktionstest.
+
 ## 6. Driftsättning och miljökonfiguration
 
 Applikationen är driftsatt på Render:
@@ -108,4 +112,23 @@ Följande manuella tester är relevanta för att visa applikationens centrala fu
 5. Öppna AI-guiden och ställ en fråga om hur plattformen används.
 6. Öppna Sensor Dashboard när IoT-servern är offline och kontrollera att ett tydligt offline-meddelande visas samtidigt som bokningsdelen fortfarande fungerar.
 
-Backendens AI-controller har enhetstester för tom fråga, för lång fråga, lyckat svar och fel från AI-tjänsten. Testresultat för manuella tester ska baseras på vad som faktiskt har kontrollerats i den driftsatta applikationen.
+### Automatiserade enhetstester för AI-controllern
+
+De fyra testerna använder en mockad `IAiService`. På så sätt kan controllerns beteende kontrolleras utan nätverksanrop eller en riktig OpenAI-nyckel:
+
+1. **Tom fråga:** kontrollerar att en tom eller blank fråga avvisas av valideringen.
+2. **För lång fråga:** kontrollerar att en fråga som överskrider gränsen på 1 000 tecken avvisas.
+3. **Lyckat svar:** kontrollerar att controllern returnerar ett lyckat svar när AI-tjänsten returnerar ett svar.
+4. **Fel från AI-tjänsten:** kontrollerar att ett undantag från den injicerade tjänsten hanteras av controllern och inte lämnas ohanterat.
+
+Testerna täcker därmed både validering, normalflöde och ett felaktigt tjänsteflöde. De testar inte OpenAI:s externa tillgänglighet eller om produktionsnyckeln är giltig.
+
+### Manuella tester i den driftsatta applikationen
+
+Resultat för manuella tester ska baseras på vad som faktiskt har kontrollerats i produktion. AI-guidens live-test ska göras efter att den nya API-nyckeln har lagts in i Render. Övriga manuella tester är:
+
+1. Logga in och kontrollera att skyddade vyer bara visas för inloggade användare.
+2. Skapa en bokning och kontrollera att den visas i bokningslistan.
+3. Testa att boka samma resurs för en överlappande tid och kontrollera att systemet avvisar dubbelbokningen.
+4. Använd två webbläsarfönster för att kontrollera SignalR-uppdateringen när en bokning skapas eller tas bort.
+5. Öppna Sensor Dashboard när IoT-servern är offline och kontrollera att ett tydligt offline-meddelande visas samtidigt som bokningsdelen fortfarande fungerar.
