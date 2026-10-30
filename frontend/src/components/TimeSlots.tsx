@@ -70,8 +70,10 @@ export default function TimeSlots({
 
   useEffect(() => {
     async function fetchResources() {
-      if (selectedResourceType === null) {
-        setResources([]);
+      if (overview || selectedResourceType === null) {
+        if (selectedResourceType === null) {
+          setResources([]);
+        }
         return;
       }
 
@@ -92,7 +94,7 @@ export default function TimeSlots({
     }
 
     fetchResources();
-  }, [selectedResourceType]);
+  }, [selectedResourceType, overview]);
 
   useEffect(() => {
     const controller = new AbortController();
